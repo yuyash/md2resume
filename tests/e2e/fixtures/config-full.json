@@ -1,0 +1,6 @@
+{
+  "format": "both",
+  "outputType": "both",
+  "paperSize": "a4",
+  "output": "./output"
+}

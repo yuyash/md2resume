@@ -1,0 +1,13 @@
+{
+  "languages": ["en", "fr"],
+  "formats": ["short", "medium"],
+  "outputFormats": ["pdf", "docx"],
+  "japaneseStyles": ["invalid-style"],
+  "styles": {
+    "colorScheme": {
+      "primary": "red",
+      "secondary": "#invalid"
+    },
+    "fontFamily": "comic-sans"
+  }
+}

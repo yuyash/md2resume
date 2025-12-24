@@ -1,0 +1,41 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Generate EN (PDF + HTML)",
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
+      "program": "${workspaceFolder}/dist/bin.js",
+      "args": [
+        "-i",
+        "${workspaceFolder}/examples/example-cv-en.md",
+        "-o",
+        "${workspaceFolder}/examples/outputs/example-cv-en",
+        "-f",
+        "cv",
+        "-t",
+        "both"
+      ],
+      "console": "integratedTerminal"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Generate JA (PDF + HTML)",
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
+      "program": "${workspaceFolder}/dist/bin.js",
+      "args": [
+        "-i",
+        "${workspaceFolder}/examples/example-cv-ja.md",
+        "-o",
+        "${workspaceFolder}/examples/outputs/example-cv-ja",
+        "-f",
+        "both",
+        "-t",
+        "both"
+      ],
+      "console": "integratedTerminal"
+    }
+  ]
+}

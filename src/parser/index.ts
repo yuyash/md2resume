@@ -1,0 +1,520 @@
+/**
+ * Markdown Parser module
+ * Parses Markdown CV files into structured data
+ */
+
+import type { List, Root, RootContent, Table } from 'mdast';
+import remarkFrontmatter from 'remark-frontmatter';
+import remarkGfm from 'remark-gfm';
+import remarkParse from 'remark-parse';
+import remarkStringify from 'remark-stringify';
+import { unified } from 'unified';
+import { parse as parseYaml } from 'yaml';
+
+import {
+  createParseError,
+  failure,
+  success,
+  type ParseError,
+  type Result,
+} from '../types/index.js';
+import {
+  METADATA_FIELDS,
+  loadFromEnv,
+  loadFromFrontmatter,
+  type CVMetadata,
+} from '../types/metadata.js';
+import {
+  findSectionByTag,
+  type CertificationEntry,
+  type EducationEntry,
+  type ExperienceEntry,
+  type ParsedSection,
+  type ProjectEntry,
+  type RoleEntry,
+  type SectionContent,
+  type SkillEntry,
+  type TableRow,
+} from '../types/sections.js';
+
+/**
+ * Parsed CV structure
+ */
+export interface ParsedCV {
+  readonly metadata: CVMetadata;
+  readonly sections: readonly ParsedSection[];
+  readonly rawContent: string;
+}
+
+/**
+ * Create markdown processor
+ */
+function createProcessor() {
+  return unified()
+    .use(remarkParse)
+    .use(remarkGfm)
+    .use(remarkFrontmatter, ['yaml'])
+    .use(remarkStringify);
+}
+
+/**
+ * Extract text from mdast node
+ */
+function extractText(node: RootContent): string {
+  if ('value' in node && typeof node.value === 'string') {
+    return node.value;
+  }
+  if ('children' in node && Array.isArray(node.children)) {
+    return (node.children as RootContent[]).map(extractText).join('');
+  }
+  return '';
+}
+
+/**
+ * Parse frontmatter delimiter type
+ */
+function parseFrontmatterDelimiter(content: string): '---' | '+++' | null {
+  const trimmed = content.trimStart();
+  if (trimmed.startsWith('---')) return '---';
+  if (trimmed.startsWith('+++')) return '+++';
+  return null;
+}
+
+/**
+ * Validate frontmatter delimiters match
+ */
+function validateFrontmatterDelimiters(content: string, errors: ParseError[]): boolean {
+  const delimiter = parseFrontmatterDelimiter(content);
+  if (!delimiter) {
+    errors.push(createParseError('Missing frontmatter', 1, 1, 'frontmatter'));
+    return false;
+  }
+
+  const lines = content.split('\n');
+  let foundStart = false;
+  let foundEnd = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]?.trim();
+    if (!foundStart && line === delimiter) {
+      foundStart = true;
+    } else if (foundStart && !foundEnd && line === delimiter) {
+      foundEnd = true;
+      break;
+    }
+  }
+
+  if (!foundEnd) {
+    errors.push(
+      createParseError(
+        `Frontmatter must end with "${delimiter}" to match opening delimiter`,
+        1,
+        1,
+        'frontmatter',
+      ),
+    );
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Extract and merge metadata from env vars and frontmatter
+ */
+function extractMetadata(tree: Root, errors: ParseError[]): CVMetadata | null {
+  const yamlNode = tree.children.find((node) => node.type === 'yaml');
+  const frontmatter: Record<string, unknown> = {};
+
+  if (yamlNode && 'value' in yamlNode) {
+    try {
+      const parsed: unknown = parseYaml(String(yamlNode.value));
+      if (typeof parsed === 'object' && parsed !== null) {
+        Object.assign(frontmatter, parsed as Record<string, unknown>);
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Unknown error';
+      errors.push(createParseError(`Invalid YAML frontmatter: ${msg}`, 1, 1, 'frontmatter'));
+      return null;
+    }
+  }
+
+  // Build metadata: env vars first, then frontmatter overrides
+  const metadata: Record<string, string | undefined> = {};
+
+  for (const fieldName of Object.keys(METADATA_FIELDS)) {
+    // Load from env first
+    let value = loadFromEnv(fieldName);
+    // Frontmatter overrides
+    const fmValue = loadFromFrontmatter(fieldName, frontmatter);
+    if (fmValue) {
+      value = fmValue;
+    }
+    if (value) {
+      metadata[fieldName] = value;
+    }
+  }
+
+  return metadata as unknown as CVMetadata;
+}
+
+/**
+ * Parse list items
+ */
+function parseListItems(listNode: List): string[] {
+  const items: string[] = [];
+  for (const item of listNode.children) {
+    if (item.type === 'listItem' && item.children) {
+      const text = item.children.map((child) => extractText(child as RootContent)).join('');
+      items.push(text.trim());
+    }
+  }
+  return items;
+}
+
+/**
+ * Parse markdown table to rows
+ */
+function parseTable(tableNode: Table): TableRow[] {
+  const rows: TableRow[] = [];
+
+  // Skip header row
+  for (let i = 1; i < tableNode.children.length; i++) {
+    const row = tableNode.children[i];
+    if (row?.type === 'tableRow' && row.children.length >= 3) {
+      const cells = row.children;
+      rows.push({
+        year: cells[0] ? extractText(cells[0] as RootContent).trim() : '',
+        month: cells[1] ? extractText(cells[1] as RootContent).trim() : '',
+        content: cells[2] ? extractText(cells[2] as RootContent).trim() : '',
+      });
+    }
+  }
+
+  return rows;
+}
+
+/**
+ * Safely convert unknown value to string
+ */
+function safeString(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  return '';
+}
+
+/**
+ * Safely convert unknown value to optional string
+ */
+function safeOptionalString(value: unknown): string | undefined {
+  if (value === undefined || value === null) return undefined;
+  return safeString(value);
+}
+
+/**
+ * Parse resume:education code block
+ */
+function parseEducationBlock(code: string): EducationEntry[] {
+  try {
+    const parsed: unknown = parseYaml(code);
+    // Handle both single object and array
+    const items = Array.isArray(parsed) ? parsed : [parsed];
+
+    return items.map((item: unknown) => {
+      const obj = item as Record<string, unknown>;
+      return {
+        school: safeString(obj.school),
+        degree: safeOptionalString(obj.degree),
+        location: safeOptionalString(obj.location),
+        start: safeOptionalString(obj.start),
+        end: safeOptionalString(obj.end),
+        details: Array.isArray(obj.details) ? obj.details.map((d) => safeString(d)) : undefined,
+      };
+    });
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Parse resume:experience code block
+ */
+function parseExperienceBlock(code: string): ExperienceEntry[] {
+  try {
+    const parsed: unknown = parseYaml(code);
+    // Handle both single object and array
+    const items = Array.isArray(parsed) ? parsed : [parsed];
+
+    return items.map((item: unknown) => {
+      const obj = item as Record<string, unknown>;
+      const roles: RoleEntry[] = [];
+
+      // Support both nested roles array and flat role definition
+      if (Array.isArray(obj.roles)) {
+        for (const roleItem of obj.roles) {
+          const role = roleItem as Record<string, unknown>;
+          const projects: ProjectEntry[] = [];
+
+          if (Array.isArray(role.projects)) {
+            for (const projItem of role.projects) {
+              const proj = projItem as Record<string, unknown>;
+              projects.push({
+                name: safeString(proj.name),
+                start: safeOptionalString(proj.start),
+                end: safeOptionalString(proj.end),
+                bullets: Array.isArray(proj.bullets)
+                  ? proj.bullets.map((b) => safeString(b))
+                  : undefined,
+              });
+            }
+          }
+
+          roles.push({
+            title: safeString(role.title),
+            team: safeOptionalString(role.team),
+            start: safeOptionalString(role.start),
+            end: safeOptionalString(role.end),
+            summary: Array.isArray(role.summary)
+              ? role.summary.map((s) => safeString(s))
+              : undefined,
+            highlights: Array.isArray(role.highlights)
+              ? role.highlights.map((h) => safeString(h))
+              : undefined,
+            projects: projects.length > 0 ? projects : undefined,
+          });
+        }
+      } else if (obj.role) {
+        // Flat role definition (role, team, start, end at top level)
+        const projects: ProjectEntry[] = [];
+
+        if (Array.isArray(obj.projects)) {
+          for (const projItem of obj.projects) {
+            const proj = projItem as Record<string, unknown>;
+            projects.push({
+              name: safeString(proj.name),
+              start: safeOptionalString(proj.start),
+              end: safeOptionalString(proj.end),
+              bullets: Array.isArray(proj.bullets)
+                ? proj.bullets.map((b) => safeString(b))
+                : undefined,
+            });
+          }
+        }
+
+        roles.push({
+          title: safeString(obj.role),
+          team: safeOptionalString(obj.team),
+          start: safeOptionalString(obj.start),
+          end: safeOptionalString(obj.end),
+          summary: Array.isArray(obj.summary) ? obj.summary.map((s) => safeString(s)) : undefined,
+          highlights: Array.isArray(obj.highlights)
+            ? obj.highlights.map((h) => safeString(h))
+            : undefined,
+          projects: projects.length > 0 ? projects : undefined,
+        });
+      }
+
+      return {
+        company: safeString(obj.company),
+        location: safeOptionalString(obj.location),
+        roles,
+      };
+    });
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Parse resume:certifications code block
+ */
+function parseCertificationsBlock(code: string): CertificationEntry[] {
+  try {
+    const parsed: unknown = parseYaml(code);
+    // Handle both single object and array
+    const items = Array.isArray(parsed) ? parsed : [parsed];
+
+    return items.map((item: unknown) => {
+      const obj = item as Record<string, unknown>;
+      return {
+        name: safeString(obj.name),
+        issuer: safeOptionalString(obj.issuer),
+        date: safeOptionalString(obj.date),
+        url: safeOptionalString(obj.url),
+      };
+    });
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Parse resume:skills code block
+ */
+function parseSkillsBlock(code: string): SkillEntry[] {
+  try {
+    const parsed: unknown = parseYaml(code);
+    // Handle both single object and array
+    const items = Array.isArray(parsed) ? parsed : [parsed];
+
+    return items.map((item: unknown) => {
+      const obj = item as Record<string, unknown>;
+      return {
+        category: safeString(obj.category),
+        items: Array.isArray(obj.items) ? obj.items.map((i) => safeString(i)) : [],
+        level: safeOptionalString(obj.level),
+      };
+    });
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Parse section content from nodes
+ */
+function parseSectionContent(nodes: RootContent[]): SectionContent {
+  // Collect all code blocks and merge entries by type
+  const educationEntries: EducationEntry[] = [];
+  const experienceEntries: ExperienceEntry[] = [];
+  const certificationEntries: CertificationEntry[] = [];
+  const skillEntries: SkillEntry[] = [];
+
+  for (const node of nodes) {
+    if (node.type === 'code') {
+      const codeNode = node;
+      if (codeNode.lang === 'resume:education') {
+        educationEntries.push(...parseEducationBlock(codeNode.value));
+      } else if (codeNode.lang === 'resume:experience') {
+        experienceEntries.push(...parseExperienceBlock(codeNode.value));
+      } else if (codeNode.lang === 'resume:certifications') {
+        certificationEntries.push(...parseCertificationsBlock(codeNode.value));
+      } else if (codeNode.lang === 'resume:skills') {
+        skillEntries.push(...parseSkillsBlock(codeNode.value));
+      }
+    }
+  }
+
+  // Return merged entries if any structured blocks found
+  if (educationEntries.length > 0) {
+    return { type: 'education', entries: educationEntries };
+  }
+  if (experienceEntries.length > 0) {
+    return { type: 'experience', entries: experienceEntries };
+  }
+  if (certificationEntries.length > 0) {
+    return { type: 'certifications', entries: certificationEntries };
+  }
+  if (skillEntries.length > 0) {
+    return { type: 'skills', entries: skillEntries };
+  }
+
+  // Check for tables
+  for (const node of nodes) {
+    if (node.type === 'table') {
+      const rows = parseTable(node);
+      return { type: 'table', rows };
+    }
+  }
+
+  // Check for lists
+  for (const node of nodes) {
+    if (node.type === 'list') {
+      const items = parseListItems(node);
+      return { type: 'list', items };
+    }
+  }
+
+  // Default to text
+  const text = nodes
+    .filter((n) => n.type === 'paragraph')
+    .map((n) => extractText(n))
+    .join('\n\n');
+
+  return { type: 'text', text };
+}
+
+/**
+ * Parse sections from AST
+ */
+function parseSections(tree: Root): ParsedSection[] {
+  const sections: ParsedSection[] = [];
+  const contentNodes = tree.children.filter((node) => node.type !== 'yaml');
+
+  let currentTitle: string | null = null;
+  let currentNodes: RootContent[] = [];
+
+  for (const node of contentNodes) {
+    if (node.type === 'heading' && node.depth === 1) {
+      // Save previous section
+      if (currentTitle !== null) {
+        const sectionDef = findSectionByTag(currentTitle);
+        if (sectionDef) {
+          sections.push({
+            id: sectionDef.id,
+            title: currentTitle,
+            content: parseSectionContent(currentNodes),
+          });
+        }
+      }
+
+      // Start new section
+      currentTitle = node.children.map((c) => extractText(c as RootContent)).join('');
+      currentNodes = [];
+    } else if (currentTitle !== null) {
+      currentNodes.push(node);
+    }
+  }
+
+  // Don't forget last section
+  if (currentTitle !== null) {
+    const sectionDef = findSectionByTag(currentTitle);
+    if (sectionDef) {
+      sections.push({
+        id: sectionDef.id,
+        title: currentTitle,
+        content: parseSectionContent(currentNodes),
+      });
+    }
+  }
+
+  return sections;
+}
+
+/**
+ * Parse markdown content
+ */
+export function parseMarkdown(markdown: string): Result<ParsedCV, ParseError[]> {
+  const errors: ParseError[] = [];
+
+  // Validate frontmatter delimiters
+  if (!validateFrontmatterDelimiters(markdown, errors)) {
+    return failure(errors);
+  }
+
+  try {
+    const processor = createProcessor();
+    const tree = processor.parse(markdown);
+
+    // Extract metadata
+    const metadata = extractMetadata(tree, errors);
+    if (!metadata) {
+      return failure(errors);
+    }
+
+    // Parse sections
+    const sections = parseSections(tree);
+
+    return success({
+      metadata,
+      sections,
+      rawContent: markdown,
+    });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : 'Unknown error';
+    errors.push(createParseError(`Failed to parse markdown: ${msg}`, 1, 1, 'markdown'));
+    return failure(errors);
+  }
+}
+
+export default parseMarkdown;

@@ -1,0 +1,91 @@
+{
+  "name": "md2cv",
+  "version": "0.0.1",
+  "description": "CV/Resume Generator - transforms Markdown CVs into PDF and HTML",
+  "type": "module",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "bin": {
+    "md2cv": "./dist/src/bin.js"
+  },
+  "files": [
+    "dist/src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "npm run typecheck && npm run lint && npm run test",
+    "clean": "rm -rf dist coverage",
+    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "lint": "eslint src tests",
+    "lint:fix": "eslint src tests --fix",
+    "prepublishOnly": "npm run clean && npm run check && npm run build",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration",
+    "test:e2e": "vitest run tests/e2e",
+    "test:all": "vitest run tests",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "cv",
+    "resume",
+    "rirekisho",
+    "shokumukeirekisho",
+    "markdown",
+    "pdf",
+    "html",
+    "generator",
+    "japanese"
+  ],
+  "author": "",
+  "license": "GPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "homepage": "",
+  "bugs": {
+    "url": ""
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^25.0.1",
+    "@types/pino-pretty": "^4.7.5",
+    "@vitest/coverage-v8": "^4.0.15",
+    "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
+    "fast-check": "^4.4.0",
+    "markdownlint": "^0.40.0",
+    "markdownlint-cli": "^0.47.0",
+    "prettier": "^3.5.0",
+    "textlint": "^15.5.0",
+    "textlint-rule-common-misspellings": "^1.0.1",
+    "textlint-rule-no-dead-link": "^6.0.1",
+    "textlint-rule-preset-japanese": "^10.0.4",
+    "textlint-rule-write-good": "^2.0.0",
+    "typescript": "^5.8.0",
+    "typescript-eslint": "^8.49.0",
+    "vitest": "^4.0.15"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "commander": "^14.0.2",
+    "dotenv": "^17.2.3",
+    "pino": "^10.1.0",
+    "pino-pretty": "^13.1.3",
+    "puppeteer": "^24.33.0",
+    "remark-frontmatter": "^5.0.0",
+    "remark-gfm": "^4.0.1",
+    "remark-parse": "^11.0.0",
+    "remark-stringify": "^11.0.0",
+    "unified": "^11.0.5",
+    "yaml": "^2.8.2"
+  }
+}
