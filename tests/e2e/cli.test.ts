@@ -734,4 +734,58 @@ describe('CLI E2E Tests', () => {
       expect(rightPage).toContain('>職歴<');
     });
   });
+
+  describe('Rirekisho Photo Option', () => {
+    beforeAll(() => cleanOutput());
+
+    it('should fail with non-existent photo file', () => {
+      const output = path.join(OUTPUT_DIR, 'rirekisho-photo-notfound');
+      const input = path.join(FIXTURES_DIR, 'resume-rirekisho-ja.md');
+      const result = runCLI(`-i ${input} -o ${output} -f rirekisho -t html --photo /nonexistent/photo.png`);
+
+      expect(result.exitCode).not.toBe(0);
+      expect(result.stderr).toContain('Photo file not found');
+    });
+
+    it('should fail with unsupported photo format', () => {
+      const output = path.join(OUTPUT_DIR, 'rirekisho-photo-unsupported');
+      const input = path.join(FIXTURES_DIR, 'resume-rirekisho-ja.md');
+      // Use the markdown file itself as an invalid photo format
+      const result = runCLI(`-i ${input} -o ${output} -f rirekisho -t html --photo ${input}`);
+
+      expect(result.exitCode).not.toBe(0);
+      expect(result.stderr).toContain('Unsupported photo format');
+    });
+
+    it('should embed photo in rirekisho HTML output', () => {
+      const output = path.join(OUTPUT_DIR, 'rirekisho-photo');
+      const input = path.join(FIXTURES_DIR, 'resume-rirekisho-ja.md');
+      const photo = path.join(FIXTURES_DIR, 'test-photo.png');
+      const result = runCLI(`-i ${input} -o ${output} -f rirekisho -t html -p a4 --photo ${photo}`);
+
+      expect(result.exitCode).toBe(0);
+      expect(fileExists(`${output}_rirekisho.html`)).toBe(true);
+
+      const html = fs.readFileSync(`${output}_rirekisho.html`, 'utf-8');
+
+      // Should contain base64 encoded image
+      expect(html).toContain('data:image/png;base64,');
+      // Should have photo-box--with-image class
+      expect(html).toContain('photo-box--with-image');
+      // Should have img tag
+      expect(html).toContain('<img');
+      // Should NOT contain photo instructions
+      expect(html).not.toContain('写真をはる位置');
+    });
+
+    it('should generate PDF with photo', () => {
+      const output = path.join(OUTPUT_DIR, 'rirekisho-photo-pdf');
+      const input = path.join(FIXTURES_DIR, 'resume-rirekisho-ja.md');
+      const photo = path.join(FIXTURES_DIR, 'test-photo.png');
+      const result = runCLI(`-i ${input} -o ${output} -f rirekisho -t pdf -p a4 --photo ${photo}`);
+
+      expect(result.exitCode).toBe(0);
+      expect(fileExists(`${output}_rirekisho.pdf`)).toBe(true);
+    });
+  });
 });

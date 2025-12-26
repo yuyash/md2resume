@@ -217,7 +217,7 @@ describe('rirekisho/components', () => {
   });
 
   describe('buildPhotoBox', () => {
-    it('should render photo box instructions', () => {
+    it('should render photo box instructions when no photo provided', () => {
       const layout = createTestLayout();
       const html = buildPhotoBox({ layout });
 
@@ -226,11 +226,40 @@ describe('rirekisho/components', () => {
       expect(html).toContain('横 24〜30mm');
     });
 
-    it('should have photo-box class', () => {
+    it('should have photo-box class when no photo provided', () => {
       const layout = createTestLayout();
       const html = buildPhotoBox({ layout });
 
       expect(html).toContain('class="photo-box"');
+      expect(html).not.toContain('photo-box--with-image');
+    });
+
+    it('should render image when photoDataUri is provided', () => {
+      const layout = createTestLayout();
+      const photoDataUri = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+      const html = buildPhotoBox({ layout, photoDataUri });
+
+      expect(html).toContain('<img');
+      expect(html).toContain(`src="${photoDataUri}"`);
+      expect(html).toContain('alt="証明写真"');
+      expect(html).toContain('object-fit: cover');
+    });
+
+    it('should have photo-box--with-image class when photo provided', () => {
+      const layout = createTestLayout();
+      const photoDataUri = 'data:image/jpeg;base64,/9j/4AAQSkZJRg==';
+      const html = buildPhotoBox({ layout, photoDataUri });
+
+      expect(html).toContain('photo-box--with-image');
+    });
+
+    it('should not show instructions when photo is provided', () => {
+      const layout = createTestLayout();
+      const photoDataUri = 'data:image/png;base64,test';
+      const html = buildPhotoBox({ layout, photoDataUri });
+
+      expect(html).not.toContain('写真をはる位置');
+      expect(html).not.toContain('縦 36〜40mm');
     });
   });
 
@@ -519,6 +548,20 @@ describe('rirekisho/components', () => {
       const html = buildLeftPage({ layout, info, history, today });
 
       expect(html).toContain('class="page page--left"');
+    });
+
+    it('should render photo when photoDataUri is provided', () => {
+      const layout = createTestLayout();
+      const info = createTestPersonalInfo();
+      const today = createTestToday();
+      const history: HistoryRow[] = [];
+      const photoDataUri = 'data:image/png;base64,testphoto';
+
+      const html = buildLeftPage({ layout, info, history, today, photoDataUri });
+
+      expect(html).toContain('<img');
+      expect(html).toContain(`src="${photoDataUri}"`);
+      expect(html).not.toContain('写真をはる位置');
     });
   });
 

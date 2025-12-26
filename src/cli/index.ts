@@ -14,14 +14,14 @@ import { parse as parseYaml } from 'yaml';
 import { generateOutput } from '../generator/index.js';
 import { parseMarkdown } from '../parser/index.js';
 import type {
-  ChronologicalOrder,
-  CLIOptions,
-  ConfigFile,
-  LogFormat,
-  OutputFormat,
-  OutputType,
-  PaperSize,
-  ResolvedConfig,
+    ChronologicalOrder,
+    CLIOptions,
+    ConfigFile,
+    LogFormat,
+    OutputFormat,
+    OutputType,
+    PaperSize,
+    ResolvedConfig,
 } from '../types/config.js';
 import { METADATA_FIELDS } from '../types/metadata.js';
 import { validateCV } from '../validator/index.js';
@@ -177,6 +177,27 @@ export function loadEnvFile(inputPath: string, logger: Logger, verbose: boolean)
 }
 
 /**
+ * Supported photo image extensions
+ */
+const SUPPORTED_PHOTO_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.tiff', '.tif'];
+
+/**
+ * Validate photo file path
+ */
+function validatePhotoPath(photoPath: string): void {
+  if (!fs.existsSync(photoPath)) {
+    throw new Error(`Photo file not found: ${photoPath}`);
+  }
+
+  const ext = path.extname(photoPath).toLowerCase();
+  if (!SUPPORTED_PHOTO_EXTENSIONS.includes(ext)) {
+    throw new Error(
+      `Unsupported photo format: ${ext}. Supported formats: ${SUPPORTED_PHOTO_EXTENSIONS.join(', ')}`,
+    );
+  }
+}
+
+/**
  * Resolve configuration from CLI options and config file
  */
 export function resolveConfig(cliOptions: CLIOptions): ResolvedConfig {
@@ -191,6 +212,14 @@ export function resolveConfig(cliOptions: CLIOptions): ResolvedConfig {
   const inputBasename = path.basename(cliOptions.input, path.extname(cliOptions.input));
   const defaultOutput = path.join(inputDir, inputBasename);
 
+  // Resolve photo path (CLI takes precedence over config file)
+  const photoPath = cliOptions.photo ?? configFile.photo;
+
+  // Validate photo path if provided
+  if (photoPath) {
+    validatePhotoPath(photoPath);
+  }
+
   return {
     input: cliOptions.input,
     output: cliOptions.output ?? configFile.output ?? defaultOutput,
@@ -201,6 +230,7 @@ export function resolveConfig(cliOptions: CLIOptions): ResolvedConfig {
     logFormat: cliOptions.logFormat ?? configFile.logFormat ?? 'text',
     chronologicalOrder: cliOptions.chronologicalOrder ?? configFile.chronologicalOrder,
     hideMotivation: cliOptions.hideMotivation || configFile.hideMotivation || false,
+    photo: photoPath,
   };
 }
 
@@ -274,6 +304,10 @@ export function createCLIProgram(): Command {
       'Hide motivation section in rirekisho format (increases history/license rows)',
       false,
     )
+    .option(
+      '--photo <filepath>',
+      'Photo image file for rirekisho format (png, jpg, tiff). Only used with rirekisho format.',
+    )
     .option('--log-format <format>', 'Log format (json or text)', 'text')
     .option('--verbose', 'Enable verbose logging', false)
     .action(async (opts: Record<string, unknown>) => {
@@ -290,6 +324,7 @@ export function createCLIProgram(): Command {
           chronologicalOrder:
             typeof opts.order === 'string' ? (opts.order as ChronologicalOrder) : undefined,
           hideMotivation: opts.hideMotivation === true,
+          photo: typeof opts.photo === 'string' ? opts.photo : undefined,
         };
 
         await runCLI(cliOptions);
@@ -314,4 +349,5 @@ export async function main(): Promise<void> {
 
 export { Command };
 
-export type { CLIOptions };
+    export type { CLIOptions };
+

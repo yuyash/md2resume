@@ -250,10 +250,25 @@ export function buildAddressRow({
 
 export interface PhotoBoxProps {
   readonly layout: LayoutDimensions;
+  /** Base64 encoded photo data URI */
+  readonly photoDataUri?: string | undefined;
 }
 
-export function buildPhotoBox({ layout }: PhotoBoxProps): string {
+export function buildPhotoBox({ layout, photoDataUri }: PhotoBoxProps): string {
   const { photoWidth, scale } = layout;
+  
+  // If photo is provided, show the image
+  if (photoDataUri) {
+    return `
+      <div style="position: absolute; right: 0; top: ${mm(-9 * scale)}; width: ${mm(photoWidth)}">
+        <div class="photo-box photo-box--with-image" style="margin: 0 auto">
+          <img src="${photoDataUri}" alt="証明写真" style="width: 100%; height: 100%; object-fit: cover;" />
+        </div>
+      </div>
+    `;
+  }
+  
+  // Default: show instructions
   return `
     <div style="position: absolute; right: 0; top: ${mm(-9 * scale)}; width: ${mm(photoWidth)}">
       <div class="photo-box" style="margin: 0 auto">
@@ -439,6 +454,8 @@ export interface LeftPageProps {
   readonly info: PersonalInfo;
   readonly history: readonly HistoryRow[];
   readonly today: TodayDate;
+  /** Base64 encoded photo data URI */
+  readonly photoDataUri?: string | undefined;
 }
 
 /**
@@ -497,6 +514,7 @@ export function buildLeftPage({
   info,
   history,
   today,
+  photoDataUri,
 }: LeftPageProps): string {
   const { leftHistoryRows, tableMargin } = layout;
 
@@ -513,7 +531,7 @@ export function buildLeftPage({
           ${buildAddressRow({ layout, info, isPrimary: true })}
           ${buildAddressRow({ layout, info, isPrimary: false })}
         </div>
-        ${buildPhotoBox({ layout })}
+        ${buildPhotoBox({ layout, photoDataUri })}
       </div>
       <div class="history-container" style="margin-top: ${mm(tableMargin)}">
         ${buildHistoryTable({

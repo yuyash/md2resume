@@ -283,6 +283,17 @@ td, th {
   line-height: 1.4;
   text-align: center;
   padding-top: ${mm(2 * scale)};
+  overflow: hidden;
+}
+
+/* Photo box with image */
+.photo-box--with-image {
+  padding: 0;
+  border: 0.5pt solid #000;
+}
+
+.photo-box--with-image img {
+  display: block;
 }
 
 /* Section boxes */

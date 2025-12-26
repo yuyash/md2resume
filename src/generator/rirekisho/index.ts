@@ -74,7 +74,7 @@ export function generateRirekishoHTML(
 <body>
   <div class="spread">
     <main class="spread-content">
-      ${buildLeftPage({ layout, info, history, today: todayDate })}
+      ${buildLeftPage({ layout, info, history, today: todayDate, photoDataUri: options.photoDataUri })}
       ${buildRightPage({ layout, history, license, motivation, notes })}
     </main>
     <footer class="spread-footer">

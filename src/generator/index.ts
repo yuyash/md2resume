@@ -45,6 +45,34 @@ export const PAGE_SIZES: Record<PaperSize, { width: number; height: number }> =
   };
 
 /**
+ * MIME types for supported image formats
+ */
+const IMAGE_MIME_TYPES: Record<string, string> = {
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.tiff': 'image/tiff',
+  '.tif': 'image/tiff',
+};
+
+/**
+ * Read image file and convert to base64 data URI
+ */
+function readPhotoAsDataUri(photoPath: string): string {
+  const ext = path.extname(photoPath).toLowerCase();
+  const mimeType = IMAGE_MIME_TYPES[ext];
+  
+  if (!mimeType) {
+    throw new Error(`Unsupported image format: ${ext}`);
+  }
+  
+  const imageBuffer = fs.readFileSync(photoPath);
+  const base64 = imageBuffer.toString('base64');
+  
+  return `data:${mimeType};base64,${base64}`;
+}
+
+/**
  * Escape HTML special characters
  */
 export function escapeHtml(text: string): string {
@@ -184,10 +212,18 @@ export async function generateOutput(
     // Generate HTML
     let html: string;
     if (format === 'rirekisho') {
+      // Read photo file if provided (only for rirekisho)
+      let photoDataUri: string | undefined;
+      if (config.photo) {
+        photoDataUri = readPhotoAsDataUri(config.photo);
+        logger.debug({ photo: config.photo }, 'Photo loaded for rirekisho');
+      }
+
       html = generateRirekishoHTML(cv, {
         paperSize: config.paperSize,
         chronologicalOrder,
         hideMotivation: config.hideMotivation,
+        photoDataUri,
       });
     } else {
       html = generateCVHTML(cv, config.paperSize, chronologicalOrder);

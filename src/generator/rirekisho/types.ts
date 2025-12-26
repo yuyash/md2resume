@@ -19,6 +19,8 @@ export interface RirekishoOptions {
   readonly paperSize: PaperSize;
   readonly chronologicalOrder?: ChronologicalOrder;
   readonly hideMotivation?: boolean;
+  /** Base64 encoded photo data URI (e.g., "data:image/png;base64,...") */
+  readonly photoDataUri?: string | undefined;
 }
 
 /** Input data for the Rirekisho generator */

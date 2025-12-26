@@ -262,6 +262,22 @@ describe('rirekisho/styles', () => {
 
         expect(css).toContain('border: 0.5pt dashed');
       });
+
+      it('should define photo-box--with-image class', () => {
+        const layout = createTestLayout();
+        const css = generateCSS(layout);
+
+        expect(css).toContain('.photo-box--with-image');
+      });
+
+      it('should use solid border for photo-box--with-image', () => {
+        const layout = createTestLayout();
+        const css = generateCSS(layout);
+
+        // Check that photo-box--with-image has solid border
+        expect(css).toContain('.photo-box--with-image');
+        expect(css).toContain('border: 0.5pt solid');
+      });
     });
 
     describe('section box styles', () => {
