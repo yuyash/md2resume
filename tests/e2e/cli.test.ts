@@ -536,6 +536,24 @@ describe('CLI E2E Tests', () => {
 
       expect(result.exitCode).toBe(0);
     });
+
+    it('should generate PDF for English CV', () => {
+      const output = path.join(OUTPUT_DIR, 'pdf-en');
+      const input = path.join(FIXTURES_DIR, 'resume-en.md');
+      const result = runCLI(`-i ${input} -o ${output} -t pdf`);
+
+      expect(result.exitCode).toBe(0);
+      expect(fileExists(`${output}_cv.pdf`)).toBe(true);
+    });
+
+    it('should generate PDF for Japanese CV', () => {
+      const output = path.join(OUTPUT_DIR, 'pdf-ja');
+      const input = path.join(FIXTURES_DIR, 'resume-ja.md');
+      const result = runCLI(`-i ${input} -o ${output} -t pdf`);
+
+      expect(result.exitCode).toBe(0);
+      expect(fileExists(`${output}_cv.pdf`)).toBe(true);
+    });
   });
 
   describe('Output Path', () => {
@@ -786,6 +804,70 @@ describe('CLI E2E Tests', () => {
 
       expect(result.exitCode).toBe(0);
       expect(fileExists(`${output}_rirekisho.pdf`)).toBe(true);
+    });
+  });
+
+  describe('Skills Section Formats', () => {
+    beforeAll(() => cleanOutput());
+
+    it('should render skills in grid format', () => {
+      const output = path.join(OUTPUT_DIR, 'skills-grid');
+      const input = path.join(FIXTURES_DIR, 'resume-skills-grid-en.md');
+      const result = runCLI(`-i ${input} -o ${output} -t html`);
+
+      expect(result.exitCode).toBe(0);
+      expect(fileExists(`${output}_cv.html`)).toBe(true);
+
+      const html = fs.readFileSync(`${output}_cv.html`, 'utf-8');
+
+      // Should have skills-grid class
+      expect(html).toContain('skills-grid');
+      // Should have grid-template-columns with 3 columns
+      expect(html).toContain('grid-template-columns: repeat(3, 1fr)');
+      // Should have skill items with bullets
+      expect(html).toContain('skill-item');
+      expect(html).toContain('• JavaScript');
+      expect(html).toContain('• TypeScript');
+    });
+
+    it('should render skills in categorized format with descriptions', () => {
+      const output = path.join(OUTPUT_DIR, 'skills-categorized');
+      const input = path.join(FIXTURES_DIR, 'resume-skills-categorized-en.md');
+      const result = runCLI(`-i ${input} -o ${output} -t html`);
+
+      expect(result.exitCode).toBe(0);
+      expect(fileExists(`${output}_cv.html`)).toBe(true);
+
+      const html = fs.readFileSync(`${output}_cv.html`, 'utf-8');
+
+      // Should have skill-category class
+      expect(html).toContain('skill-category');
+      // Should have category names with descriptions
+      expect(html).toContain('Languages:');
+      expect(html).toContain('JavaScript, TypeScript, Python, Go');
+      expect(html).toContain('Frameworks:');
+      expect(html).toContain('React, Vue.js, Node.js, Express');
+      // Cloud category uses items array, should be joined with comma
+      expect(html).toContain('Cloud:');
+      expect(html).toContain('AWS, GCP, Azure');
+    });
+
+    it('should generate PDF for grid format skills', () => {
+      const output = path.join(OUTPUT_DIR, 'skills-grid-pdf');
+      const input = path.join(FIXTURES_DIR, 'resume-skills-grid-en.md');
+      const result = runCLI(`-i ${input} -o ${output} -t pdf`);
+
+      expect(result.exitCode).toBe(0);
+      expect(fileExists(`${output}_cv.pdf`)).toBe(true);
+    });
+
+    it('should generate PDF for categorized format skills', () => {
+      const output = path.join(OUTPUT_DIR, 'skills-categorized-pdf');
+      const input = path.join(FIXTURES_DIR, 'resume-skills-categorized-en.md');
+      const result = runCLI(`-i ${input} -o ${output} -t pdf`);
+
+      expect(result.exitCode).toBe(0);
+      expect(fileExists(`${output}_cv.pdf`)).toBe(true);
     });
   });
 });

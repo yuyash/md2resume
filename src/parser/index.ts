@@ -457,19 +457,25 @@ function parseCertificationsBlock(code: string): CertificationEntry[] {
 
 /**
  * Parse resume:skills code block
- * Supports two formats:
- * 1. Simple items list with optional columns:
+ * Supports three formats:
+ * 1. Simple items list with optional columns (grid format):
  *    columns: 3
  *    items:
  *      - JavaScript
  *      - TypeScript
- * 2. Categorized skills (legacy):
- *    - category: Programming
- *      items: [JavaScript, TypeScript]
+ * 2. Categorized skills with items:
+ *    categories:
+ *      - category: Programming
+ *        items: [JavaScript, TypeScript]
+ * 3. Categorized skills with descriptions:
+ *    categories:
+ *      - category: Languages
+ *        description: JavaScript, TypeScript, Python
  */
 interface ParsedSkillsResult {
   entries: SkillEntry[];
   columns: number | undefined;
+  format: 'grid' | 'categorized' | undefined;
 }
 
 function parseSkillsBlock(code: string): ParsedSkillsResult {
@@ -480,15 +486,31 @@ function parseSkillsBlock(code: string): ParsedSkillsResult {
     if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
       const obj = parsed as Record<string, unknown>;
 
-      // New format: { columns?: number, items: string[] }
+      // Format 1: Simple items list (grid format)
       if (Array.isArray(obj.items) && obj.items.every((i) => typeof i === 'string')) {
         const columns = typeof obj.columns === 'number' ? obj.columns : undefined;
         const items = obj.items.map((i) => safeString(i));
         // Convert to single SkillEntry with empty category
         return {
-          entries: [{ category: '', items, level: undefined }],
+          entries: [{ category: '', items, description: undefined, level: undefined }],
           columns,
+          format: 'grid',
         };
+      }
+
+      // Format 2 & 3: Categorized skills
+      if (Array.isArray(obj.categories)) {
+        const columns = typeof obj.columns === 'number' ? obj.columns : undefined;
+        const entries = obj.categories.map((cat: unknown) => {
+          const catObj = cat as Record<string, unknown>;
+          return {
+            category: safeString(catObj.category),
+            items: Array.isArray(catObj.items) ? catObj.items.map((i) => safeString(i)) : [],
+            description: safeOptionalString(catObj.description),
+            level: safeOptionalString(catObj.level),
+          };
+        });
+        return { entries, columns, format: 'categorized' };
       }
     }
 
@@ -499,13 +521,14 @@ function parseSkillsBlock(code: string): ParsedSkillsResult {
       return {
         category: safeString(obj.category),
         items: Array.isArray(obj.items) ? obj.items.map((i) => safeString(i)) : [],
+        description: safeOptionalString(obj.description),
         level: safeOptionalString(obj.level),
       };
     });
 
-    return { entries, columns: undefined };
+    return { entries, columns: undefined, format: undefined };
   } catch {
-    return { entries: [], columns: undefined };
+    return { entries: [], columns: undefined, format: undefined };
   }
 }
 
@@ -563,6 +586,7 @@ function parseSectionContent(nodes: RootContent[]): SectionContent {
   const competencyEntries: CompetencyEntry[] = [];
   const languageEntries: LanguageEntry[] = [];
   let skillsColumns: number | undefined = undefined;
+  let skillsFormat: 'grid' | 'categorized' | undefined = undefined;
 
   for (const node of nodes) {
     if (node.type === 'code') {
@@ -578,6 +602,9 @@ function parseSectionContent(nodes: RootContent[]): SectionContent {
         skillEntries.push(...result.entries);
         if (result.columns !== undefined) {
           skillsColumns = result.columns;
+        }
+        if (result.format !== undefined) {
+          skillsFormat = result.format;
         }
       } else if (codeNode.lang === 'resume:competencies') {
         competencyEntries.push(...parseCompetenciesBlock(codeNode.value));
@@ -598,7 +625,7 @@ function parseSectionContent(nodes: RootContent[]): SectionContent {
     return { type: 'certifications', entries: certificationEntries };
   }
   if (skillEntries.length > 0) {
-    return { type: 'skills', entries: skillEntries, options: { columns: skillsColumns } };
+    return { type: 'skills', entries: skillEntries, options: { columns: skillsColumns, format: skillsFormat } };
   }
   if (competencyEntries.length > 0) {
     return { type: 'competencies', entries: competencyEntries };

@@ -149,6 +149,12 @@ function generateStyles(paperSize: PaperSize): string {
     }
     section {
       margin-bottom: 14px;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .entry {
+      page-break-inside: avoid;
+      break-inside: avoid;
     }
     h2 {
       font-size: 12pt;
@@ -231,6 +237,21 @@ function generateStyles(paperSize: PaperSize): string {
     }
     .skill-item {
       font-size: 10pt;
+    }
+    .skill-category {
+      margin-bottom: 4px;
+      font-size: 10pt;
+    }
+    .skill-category-name {
+      font-weight: bold;
+    }
+    .cert-item {
+      font-size: 9pt;
+      color: #000;
+      margin-bottom: 2px;
+    }
+    .lang-item {
+      font-size: 9pt;
     }
     @media print {
       body {
@@ -372,15 +393,9 @@ function renderExperience(entries: readonly ExperienceEntry[]): string {
 function renderCertifications(entries: readonly CertificationEntry[]): string {
   return entries
     .map((entry) => {
-      let html = '<div class="entry">';
-      html += '<div class="entry-header">';
-      html += `<span class="entry-title">${escapeHtml(entry.name)}</span>`;
+      let html = `<div class="cert-item">• ${escapeHtml(entry.name)}`;
       if (entry.date) {
-        html += `<span class="entry-date">${escapeHtml(formatDate(entry.date))}</span>`;
-      }
-      html += '</div>';
-      if (entry.issuer) {
-        html += `<div class="entry-subtitle">${escapeHtml(entry.issuer)}</div>`;
+        html += ` (${escapeHtml(formatDate(entry.date))})`;
       }
       html += '</div>';
       return html;
@@ -394,10 +409,25 @@ function renderCertifications(entries: readonly CertificationEntry[]): string {
 const DEFAULT_SKILLS_COLUMNS = 3;
 
 /**
- * Render skills section as grid
+ * Render skills section - supports grid and categorized formats
  */
 function renderSkills(entries: readonly SkillEntry[], options: SkillsOptions): string {
-  // Flatten all skill items into a single list
+  // Check if categorized format (entries have non-empty category with description)
+  const isCategorized = options.format === 'categorized' || 
+    entries.some(e => e.category && (e.description || e.items.length > 0));
+
+  if (isCategorized && entries.some(e => e.category)) {
+    // Categorized format: <category>: <description or items>
+    return entries
+      .filter(e => e.category)
+      .map((entry) => {
+        const content = entry.description || entry.items.join(', ');
+        return `<div class="skill-category"><span class="skill-category-name">${escapeHtml(entry.category)}:</span> ${escapeHtml(content)}</div>`;
+      })
+      .join('\n');
+  }
+
+  // Grid format: flatten all items
   const allItems: string[] = [];
   for (const entry of entries) {
     for (const item of entry.items) {
@@ -451,7 +481,7 @@ function renderCompetencies(entries: readonly CompetencyEntry[]): string {
 function renderLanguages(entries: readonly LanguageEntry[]): string {
   return entries
     .map((entry) => {
-      let html = `<span>${escapeHtml(entry.language)}`;
+      let html = `<span class="lang-item">${escapeHtml(entry.language)}`;
       if (entry.level) {
         html += ` (${escapeHtml(entry.level)})`;
       }

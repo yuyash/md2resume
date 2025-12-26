@@ -3,7 +3,6 @@ name: Taro Yamada
 name_ja: 山田 太郎
 email_address: taro.yamada@example.com
 phone_number: 090-1234-5678
-home_address: 東京都渋谷区
 ---
 
 # 概要
@@ -69,26 +68,19 @@ home_address: 東京都渋谷区
 ```resume:education
 - school: 東京大学大学院
   degree: 情報工学修士
-  location: 東京都
   start: 2013-04
   end: 2015-03
-  details:
-    - 分散システム専攻。GPA 3.9/4.0
-    - 修士論文：「地理分散システムにおけるコンセンサスアルゴリズムの最適化」
-    - CS144 コンピュータネットワーク入門 ティーチングアシスタント
 - school: 東京工業大学
   degree: 情報工学学士
-  location: 東京都
   start: 2009-04
   end: 2013-03
-  details:
-    - 優等卒業。GPA 3.8/4.0
-    - 全学期でディーンズリスト
-    - コンピュータサイエンス学生会会長
 ```
 
 # スキル
 
+```resume:skills
+columns: 4
+items:
 - JavaScript/TypeScript
 - Python
 - Go
@@ -115,18 +107,16 @@ home_address: 東京都渋谷区
 - Redis
 - Elasticsearch
 - Apache Kafka
+```
 
 # 資格
 
 ```resume:certifications
 - name: AWS ソリューションアーキテクト プロフェッショナル
-  issuer: Amazon Web Services
   date: 2023-03
 - name: Certified Kubernetes Administrator
-  issuer: CNCF
   date: 2022-08
 - name: Google Cloud Professional Data Engineer
-  issuer: Google
   date: 2021-11
 ```
 

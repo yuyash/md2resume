@@ -27,6 +27,7 @@ export const SECTION_DEFINITIONS: readonly SectionDef[] = [
     id: 'summary',
     tags: [
       '概要',
+      '職務要約',
       'Summary',
       'Professional Summary',
       'Profile',
@@ -44,7 +45,7 @@ export const SECTION_DEFINITIONS: readonly SectionDef[] = [
   },
   {
     id: 'experience',
-    tags: ['職歴', 'Experience', 'Work Experience', 'Professional Experience'],
+    tags: ['職歴', '職務経歴', 'Experience', 'Work Experience', 'Professional Experience'],
     usage: 'both',
     requiredFor: ['cv', 'rirekisho', 'both'],
   },
@@ -188,10 +189,14 @@ export interface CertificationEntry {
 
 /**
  * Skill entry structure (resume:skills block)
+ * Supports two formats:
+ * 1. Flat list: items only (category is empty string)
+ * 2. Categorized: category with items or description
  */
 export interface SkillEntry {
   readonly category: string;
   readonly items: readonly string[];
+  readonly description: string | undefined;
   readonly level: string | undefined;
 }
 
@@ -200,6 +205,7 @@ export interface SkillEntry {
  */
 export interface SkillsOptions {
   readonly columns: number | undefined;
+  readonly format: 'grid' | 'categorized' | undefined;
 }
 
 /**
