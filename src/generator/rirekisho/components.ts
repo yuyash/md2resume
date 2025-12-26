@@ -199,10 +199,10 @@ export function buildAddressRow({
     charWidthFactor: 0.22,
   });
   const emailFontSize = calculateFontSize(email || '', contactWidth, scale, {
-    maxFontPt: 10 * scale,
-    minFontPt: 4 * scale,
-    paddingMm: 4 * scale,
-    charWidthFactor: 0.18, // ASCII characters are narrower
+    maxFontPt: 9 * scale,
+    minFontPt: 3 * scale, // Allow smaller font for long emails
+    paddingMm: 4 * scale, // Left/right padding
+    charWidthFactor: 0.22, // Slightly larger factor for better fit estimation
   });
 
   const label = isPrimary ? '現住所' : '連絡先';
@@ -235,9 +235,9 @@ export function buildAddressRow({
           <span class="text--xs" style="position: absolute; top: 50%; left: ${mm(1 * scale)}; transform: translateY(-50%)">電話</span>
           <span style="font-size: ${pt(phoneFontSize)}">${phone}</span>
         </div>
-        <div class="flex--1 flex flex--center" style="justify-content: center; position: relative">
+        <div class="flex--1 flex flex--center" style="justify-content: center; position: relative; padding: 0 ${mm(2 * scale)}">
           <span class="text--xs" style="position: absolute; top: ${mm(1 * scale)}; left: ${mm(1 * scale)}">E-mail</span>
-          <span style="font-size: ${pt(emailFontSize)}">${email}</span>
+          <span style="font-size: ${pt(emailFontSize)}; text-align: center; word-break: break-all; padding-top: ${mm(3 * scale)}">${email}</span>
         </div>
       </div>
     </div>
