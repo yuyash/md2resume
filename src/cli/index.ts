@@ -200,6 +200,7 @@ export function resolveConfig(cliOptions: CLIOptions): ResolvedConfig {
     debug: cliOptions.debug,
     logFormat: cliOptions.logFormat ?? configFile.logFormat ?? 'text',
     chronologicalOrder: cliOptions.chronologicalOrder ?? configFile.chronologicalOrder,
+    hideMotivation: cliOptions.hideMotivation || configFile.hideMotivation || false,
   };
 }
 
@@ -268,6 +269,11 @@ export function createCLIProgram(): Command {
       '--order <order>',
       'Chronological order for CV format only (asc: oldest first, desc: newest first). Default: desc. Rirekisho always uses oldest first.',
     )
+    .option(
+      '--hide-motivation',
+      'Hide motivation section in rirekisho format (increases history/license rows)',
+      false,
+    )
     .option('--log-format <format>', 'Log format (json or text)', 'text')
     .option('--verbose', 'Enable verbose logging', false)
     .action(async (opts: Record<string, unknown>) => {
@@ -283,6 +289,7 @@ export function createCLIProgram(): Command {
           logFormat: (opts.logFormat as LogFormat) ?? 'text',
           chronologicalOrder:
             typeof opts.order === 'string' ? (opts.order as ChronologicalOrder) : undefined,
+          hideMotivation: opts.hideMotivation === true,
         };
 
         await runCLI(cliOptions);

@@ -23,6 +23,7 @@ import {
   loadFromEnv,
   loadFromFrontmatter,
   type CVMetadata,
+  type Gender,
 } from '../types/metadata.js';
 import {
   findSectionByTag,
@@ -140,7 +141,7 @@ function extractMetadata(tree: Root, errors: ParseError[]): CVMetadata | null {
   }
 
   // Build metadata: env vars first, then frontmatter overrides
-  const metadata: Record<string, string | undefined> = {};
+  const metadata: Record<string, string | Date | Gender | undefined> = {};
 
   for (const fieldName of Object.keys(METADATA_FIELDS)) {
     // Load from env first
@@ -151,7 +152,14 @@ function extractMetadata(tree: Root, errors: ParseError[]): CVMetadata | null {
       value = fmValue;
     }
     if (value) {
-      metadata[fieldName] = value;
+      // Parse dob field to Date type
+      if (fieldName === 'dob') {
+        metadata[fieldName] = parseDateOfBirth(value);
+      } else if (fieldName === 'gender') {
+        metadata[fieldName] = parseGender(value);
+      } else {
+        metadata[fieldName] = value;
+      }
     }
   }
 
@@ -212,6 +220,95 @@ function safeOptionalString(value: unknown): string | undefined {
 }
 
 /**
+ * Parse date of birth string to Date object
+ * Supports formats: YYYY-MM-DD, YYYY/MM/DD, YYYY年MM月DD日, MM/DD/YYYY
+ */
+function parseDateOfBirth(str: string | undefined): Date | undefined {
+  if (!str) return undefined;
+  const s = str.trim();
+
+  // YYYY-MM-DD or YYYY/MM/DD
+  let m = s.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/);
+  if (m) {
+    return new Date(parseInt(m[1]!, 10), parseInt(m[2]!, 10) - 1, parseInt(m[3]!, 10));
+  }
+
+  // YYYY年MM月DD日
+  m = s.match(/^(\d{4})年(\d{1,2})月(\d{1,2})日$/);
+  if (m) {
+    return new Date(parseInt(m[1]!, 10), parseInt(m[2]!, 10) - 1, parseInt(m[3]!, 10));
+  }
+
+  // MM/DD/YYYY or MM-DD-YYYY
+  m = s.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+  if (m) {
+    return new Date(parseInt(m[3]!, 10), parseInt(m[1]!, 10) - 1, parseInt(m[2]!, 10));
+  }
+
+  return undefined;
+}
+
+/**
+ * Parse year-month string to Date object (day defaults to 1)
+ * Supports formats: YYYY-MM, YYYY/MM, YYYY年MM月, YYYY (year only)
+ */
+function parseYearMonth(str: string | undefined): Date | undefined {
+  if (!str) return undefined;
+  const s = str.trim();
+
+  // YYYY-MM or YYYY/MM
+  let m = s.match(/^(\d{4})[-/](\d{1,2})$/);
+  if (m) {
+    return new Date(parseInt(m[1]!, 10), parseInt(m[2]!, 10) - 1, 1);
+  }
+
+  // YYYY年MM月
+  m = s.match(/^(\d{4})年(\d{1,2})月/);
+  if (m) {
+    return new Date(parseInt(m[1]!, 10), parseInt(m[2]!, 10) - 1, 1);
+  }
+
+  // YYYY only
+  m = s.match(/^(\d{4})$/);
+  if (m) {
+    return new Date(parseInt(m[1]!, 10), 0, 1);
+  }
+
+  return undefined;
+}
+
+/**
+ * Check if string represents "present" or "現在"
+ */
+function isPresent(str: string | undefined): boolean {
+  if (!str) return false;
+  const s = str.trim().toLowerCase();
+  return s === 'present' || s === '現在';
+}
+
+/**
+ * Parse end date which can be a date or "present"/"現在"
+ */
+function parseEndDate(str: string | undefined): Date | 'present' | undefined {
+  if (!str) return undefined;
+  if (isPresent(str)) return 'present';
+  return parseYearMonth(str);
+}
+
+/**
+ * Parse gender string to Gender type
+ * Supports: male/m/男, female/f/女, other
+ */
+function parseGender(str: string | undefined): Gender {
+  if (!str) return undefined;
+  const s = str.trim().toLowerCase();
+  if (s === 'male' || s === 'm' || s === '男') return 'male';
+  if (s === 'female' || s === 'f' || s === '女') return 'female';
+  if (s === 'other') return 'other';
+  return undefined;
+}
+
+/**
  * Parse resume:education code block
  */
 function parseEducationBlock(code: string): EducationEntry[] {
@@ -226,8 +323,8 @@ function parseEducationBlock(code: string): EducationEntry[] {
         school: safeString(obj.school),
         degree: safeOptionalString(obj.degree),
         location: safeOptionalString(obj.location),
-        start: safeOptionalString(obj.start),
-        end: safeOptionalString(obj.end),
+        start: parseYearMonth(safeOptionalString(obj.start)),
+        end: parseYearMonth(safeOptionalString(obj.end)),
         details: Array.isArray(obj.details) ? obj.details.map((d) => safeString(d)) : undefined,
       };
     });
@@ -260,8 +357,8 @@ function parseExperienceBlock(code: string): ExperienceEntry[] {
               const proj = projItem as Record<string, unknown>;
               projects.push({
                 name: safeString(proj.name),
-                start: safeOptionalString(proj.start),
-                end: safeOptionalString(proj.end),
+                start: parseYearMonth(safeOptionalString(proj.start)),
+                end: parseYearMonth(safeOptionalString(proj.end)),
                 bullets: Array.isArray(proj.bullets)
                   ? proj.bullets.map((b) => safeString(b))
                   : undefined,
@@ -272,8 +369,8 @@ function parseExperienceBlock(code: string): ExperienceEntry[] {
           roles.push({
             title: safeString(role.title),
             team: safeOptionalString(role.team),
-            start: safeOptionalString(role.start),
-            end: safeOptionalString(role.end),
+            start: parseYearMonth(safeOptionalString(role.start)),
+            end: parseEndDate(safeOptionalString(role.end)),
             summary: Array.isArray(role.summary)
               ? role.summary.map((s) => safeString(s))
               : undefined,
@@ -292,8 +389,8 @@ function parseExperienceBlock(code: string): ExperienceEntry[] {
             const proj = projItem as Record<string, unknown>;
             projects.push({
               name: safeString(proj.name),
-              start: safeOptionalString(proj.start),
-              end: safeOptionalString(proj.end),
+              start: parseYearMonth(safeOptionalString(proj.start)),
+              end: parseYearMonth(safeOptionalString(proj.end)),
               bullets: Array.isArray(proj.bullets)
                 ? proj.bullets.map((b) => safeString(b))
                 : undefined,
@@ -304,8 +401,8 @@ function parseExperienceBlock(code: string): ExperienceEntry[] {
         roles.push({
           title: safeString(obj.role),
           team: safeOptionalString(obj.team),
-          start: safeOptionalString(obj.start),
-          end: safeOptionalString(obj.end),
+          start: parseYearMonth(safeOptionalString(obj.start)),
+          end: parseEndDate(safeOptionalString(obj.end)),
           summary: Array.isArray(obj.summary) ? obj.summary.map((s) => safeString(s)) : undefined,
           highlights: Array.isArray(obj.highlights)
             ? obj.highlights.map((h) => safeString(h))
@@ -339,7 +436,7 @@ function parseCertificationsBlock(code: string): CertificationEntry[] {
       return {
         name: safeString(obj.name),
         issuer: safeOptionalString(obj.issuer),
-        date: safeOptionalString(obj.date),
+        date: parseYearMonth(safeOptionalString(obj.date)),
         url: safeOptionalString(obj.url),
       };
     });

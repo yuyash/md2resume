@@ -30,6 +30,7 @@ export interface CLIOptions {
   readonly debug: boolean;
   readonly logFormat: LogFormat;
   readonly chronologicalOrder: ChronologicalOrder | undefined;
+  readonly hideMotivation: boolean;
 }
 
 /**
@@ -42,6 +43,7 @@ export interface ConfigFile {
   readonly output?: string;
   readonly logFormat?: LogFormat;
   readonly chronologicalOrder?: ChronologicalOrder;
+  readonly hideMotivation?: boolean;
 }
 
 /**
@@ -56,4 +58,5 @@ export interface ResolvedConfig {
   readonly debug: boolean;
   readonly logFormat: LogFormat;
   readonly chronologicalOrder: ChronologicalOrder | undefined;
+  readonly hideMotivation: boolean;
 }

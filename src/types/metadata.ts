@@ -129,12 +129,17 @@ export interface CVMetadata {
   readonly home_address2_furigana?: string;
 
   // Optional personal info
-  readonly gender?: string;
-  readonly dob?: string;
+  readonly gender?: Gender;
+  readonly dob?: Date;
 }
 
 // Alias for backward compatibility
 export type ResumeMetadata = CVMetadata;
+
+/**
+ * Gender type
+ */
+export type Gender = 'male' | 'female' | 'other' | undefined;
 
 /**
  * Get required metadata field names

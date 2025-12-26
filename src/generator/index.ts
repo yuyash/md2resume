@@ -9,17 +9,17 @@ import puppeteer from 'puppeteer';
 
 import type { Logger } from '../cli/index.js';
 import type {
-  ChronologicalOrder,
-  OutputFormat,
-  OutputType,
-  PaperSize,
-  ResolvedConfig,
+    ChronologicalOrder,
+    OutputFormat,
+    OutputType,
+    PaperSize,
+    ResolvedConfig,
 } from '../types/config.js';
 import type { CVMetadata } from '../types/metadata.js';
 import type { ParsedSection } from '../types/sections.js';
 import { generateCVEnHTML } from './resume_en.js';
 import { generateCVJaHTML } from './resume_ja.js';
-import { generateRirekishoHTML } from './rirekisho-mhlw.js';
+import { generateRirekishoHTML } from './rirekisho/index.js';
 
 // Re-export generators
 export { generateCVEnHTML, generateCVJaHTML, generateRirekishoHTML };
@@ -35,13 +35,14 @@ interface CVInput {
 /**
  * Page size dimensions in mm
  */
-export const PAGE_SIZES: Record<PaperSize, { width: number; height: number }> = {
-  a3: { width: 420, height: 297 },
-  a4: { width: 210, height: 297 },
-  b4: { width: 364, height: 257 },
-  b5: { width: 176, height: 250 },
-  letter: { width: 215.9, height: 279.4 },
-};
+export const PAGE_SIZES: Record<PaperSize, { width: number; height: number }> =
+  {
+    a3: { width: 420, height: 297 },
+    a4: { width: 210, height: 297 },
+    b4: { width: 364, height: 257 },
+    b5: { width: 176, height: 250 },
+    letter: { width: 215.9, height: 279.4 },
+  };
 
 /**
  * Escape HTML special characters
@@ -111,8 +112,16 @@ async function generatePDF(
     let pdfOptions: Parameters<typeof page.pdf>[0];
 
     if (isRirekisho) {
-      // Rirekisho uses landscape A3/B4
-      const rirekishoSize = paperSize === 'b4' ? PAGE_SIZES.b4 : PAGE_SIZES.a3;
+      // Rirekisho uses landscape orientation with the specified paper size
+      // PAGE_SIZES for rirekisho are already in landscape (width > height)
+      const rirekishoSizes: Record<PaperSize, { width: number; height: number }> = {
+        a3: { width: 420, height: 297 },
+        a4: { width: 297, height: 210 },
+        b4: { width: 364, height: 257 },
+        b5: { width: 257, height: 182 },
+        letter: { width: 279.4, height: 215.9 },
+      };
+      const rirekishoSize = rirekishoSizes[paperSize];
       await page.setViewport({
         width: Math.round(rirekishoSize.width * 3.78),
         height: Math.round(rirekishoSize.height * 3.78),
@@ -153,7 +162,8 @@ export async function generateOutput(
   logger: Logger,
 ): Promise<string[]> {
   const generatedFiles: string[] = [];
-  const formats: OutputFormat[] = config.format === 'both' ? ['cv', 'rirekisho'] : [config.format];
+  const formats: OutputFormat[] =
+    config.format === 'both' ? ['cv', 'rirekisho'] : [config.format];
   const outputTypes: OutputType[] =
     config.outputType === 'both' ? ['html', 'pdf'] : [config.outputType];
 
@@ -174,7 +184,11 @@ export async function generateOutput(
     // Generate HTML
     let html: string;
     if (format === 'rirekisho') {
-      html = generateRirekishoHTML(cv, { paperSize: config.paperSize, chronologicalOrder });
+      html = generateRirekishoHTML(cv, {
+        paperSize: config.paperSize,
+        chronologicalOrder,
+        hideMotivation: config.hideMotivation,
+      });
     } else {
       html = generateCVHTML(cv, config.paperSize, chronologicalOrder);
     }
@@ -189,7 +203,11 @@ export async function generateOutput(
       if (outputType === 'html') {
         fs.writeFileSync(outputPath, html, 'utf-8');
       } else {
-        const pdfBuffer = await generatePDF(html, config.paperSize, format === 'rirekisho');
+        const pdfBuffer = await generatePDF(
+          html,
+          config.paperSize,
+          format === 'rirekisho',
+        );
         fs.writeFileSync(outputPath, pdfBuffer);
       }
 

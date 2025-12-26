@@ -52,39 +52,40 @@ function escapeHtml(text: string): string {
 /**
  * Format date for display
  */
-function formatDate(dateStr: string | undefined): string {
-  if (!dateStr) return '';
-  // Handle "present" or similar
-  if (dateStr.toLowerCase() === 'present') return 'Present';
-  // Try to parse YYYY-MM format
-  const match = dateStr.match(/^(\d{4})-(\d{1,2})(?:-\d{1,2})?$/);
-  if (match) {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    const month = parseInt(match[2]!, 10);
-    return `${months[month - 1]} ${match[1]}`;
-  }
-  return dateStr;
+function formatDate(date: Date | undefined): string {
+  if (!date) return '';
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  return `${months[date.getMonth()]} ${date.getFullYear()}`;
+}
+
+/**
+ * Format end date which can be Date or 'present'
+ */
+function formatEndDate(end: Date | 'present' | undefined): string {
+  if (!end) return '';
+  if (end === 'present') return 'Present';
+  return formatDate(end);
 }
 
 /**
  * Format date range
  */
-function formatDateRange(start: string | undefined, end: string | undefined): string {
+function formatDateRange(start: Date | undefined, end: Date | 'present' | undefined): string {
   const startStr = formatDate(start);
-  const endStr = formatDate(end);
+  const endStr = formatEndDate(end);
   if (startStr && endStr) return `${startStr} - ${endStr}`;
   if (startStr) return startStr;
   return '';

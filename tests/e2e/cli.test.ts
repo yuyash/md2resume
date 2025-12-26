@@ -80,7 +80,7 @@ describe('CLI E2E Tests', () => {
       expect(result.stdout).toContain('-p, --paper-size');
       expect(result.stdout).toContain('-c, --config');
       expect(result.stdout).toContain('--log-format');
-      expect(result.stdout).toContain('--debug');
+      expect(result.stdout).toContain('--verbose');
     });
 
     it('should fail without required -i option', () => {
@@ -238,6 +238,107 @@ describe('CLI E2E Tests', () => {
     });
   });
 
+  describe('Rirekisho Paper Sizes', () => {
+    beforeAll(() => cleanOutput());
+
+    const paperSizes = [
+      { size: 'a3', width: '420mm', height: '297mm' },
+      { size: 'a4', width: '297mm', height: '210mm' },
+      { size: 'b4', width: '364mm', height: '257mm' },
+      { size: 'b5', width: '257mm', height: '182mm' },
+      { size: 'letter', width: '279.4mm', height: '215.9mm' },
+    ];
+
+    for (const { size, width, height } of paperSizes) {
+      it(`should generate rirekisho with correct ${size.toUpperCase()} dimensions`, () => {
+        const output = path.join(OUTPUT_DIR, `rirekisho-${size}`);
+        const input = path.join(FIXTURES_DIR, 'resume-rirekisho-ja.md');
+        const result = runCLI(`-i ${input} -o ${output} -f rirekisho -t html -p ${size}`);
+
+        expect(result.exitCode).toBe(0);
+        expect(fileExists(`${output}_rirekisho.html`)).toBe(true);
+
+        const html = fs.readFileSync(`${output}_rirekisho.html`, 'utf-8');
+        // Check @page size is set correctly (landscape orientation)
+        expect(html).toContain(`size: ${width} ${height} landscape`);
+        // Check spread container has correct width
+        expect(html).toContain(`width: ${width}`);
+        // Check basic structure exists
+        expect(html).toContain('class="spread"');
+        expect(html).toContain('class="page page--left"');
+        expect(html).toContain('class="page page--right"');
+        expect(html).toContain('履歴書');
+      });
+    }
+  });
+
+  describe('Rirekisho Structure Validation', () => {
+    beforeAll(() => cleanOutput());
+
+    const paperSizes = ['a3', 'a4', 'b4', 'b5', 'letter'];
+
+    for (const size of paperSizes) {
+      it(`should have all required sections for ${size.toUpperCase()}`, () => {
+        const output = path.join(OUTPUT_DIR, `rirekisho-sections-${size}`);
+        const input = path.join(FIXTURES_DIR, 'resume-rirekisho-ja.md');
+        const result = runCLI(`-i ${input} -o ${output} -f rirekisho -t html -p ${size}`);
+
+        expect(result.exitCode).toBe(0);
+
+        const html = fs.readFileSync(`${output}_rirekisho.html`, 'utf-8');
+
+        // Check required sections exist
+        expect(html).toContain('履歴書'); // Title
+        expect(html).toContain('ふりがな'); // Furigana label
+        expect(html).toContain('氏'); // Name label (氏名)
+        expect(html).toContain('学 歴 ・ 職 歴'); // Left page history table title
+        expect(html).toContain('学歴・職歴'); // Right page history table title
+        expect(html).toContain('免許・資格'); // License/certification table title
+        expect(html).toContain('志望の動機'); // Motivation section
+        expect(html).toContain('本人希望記入欄'); // Notes section
+        expect(html).toContain('※「性別」欄'); // Gender note
+
+        // Check table structure
+        expect(html).toContain('class="table-wrapper"');
+        expect(html).toContain('<table>');
+        expect(html).toContain('<tr');
+        expect(html).toContain('<td');
+
+        // Check that table rows have height set (for consistent layout)
+        const trWithHeight = (html.match(/<tr style="height: [\d.]+mm">/g) || []).length;
+        expect(trWithHeight).toBeGreaterThan(0);
+      });
+    }
+  });
+
+  describe('Hide Motivation Option (--hide-motivation)', () => {
+    beforeAll(() => cleanOutput());
+
+    it('should include motivation section by default', () => {
+      const output = path.join(OUTPUT_DIR, 'motivation-default');
+      const input = path.join(FIXTURES_DIR, 'resume-rirekisho-ja.md');
+      const result = runCLI(`-i ${input} -o ${output} -f rirekisho -t html -p a4`);
+
+      expect(result.exitCode).toBe(0);
+      const html = fs.readFileSync(`${output}_rirekisho.html`, 'utf-8');
+      expect(html).toContain('志望の動機');
+    });
+
+    it('should hide motivation section with --hide-motivation', () => {
+      const output = path.join(OUTPUT_DIR, 'motivation-hidden');
+      const input = path.join(FIXTURES_DIR, 'resume-rirekisho-ja.md');
+      const result = runCLI(
+        `-i ${input} -o ${output} -f rirekisho -t html -p a4 --hide-motivation`,
+      );
+
+      expect(result.exitCode).toBe(0);
+      const html = fs.readFileSync(`${output}_rirekisho.html`, 'utf-8');
+      expect(html).not.toContain('志望の動機');
+      // Notes section should still exist
+      expect(html).toContain('本人希望記入欄');
+    });
+  });
+
   describe('Config File (-c, --config)', () => {
     beforeAll(() => cleanOutput());
 
@@ -296,7 +397,7 @@ describe('CLI E2E Tests', () => {
     it('should output text format logs (default)', () => {
       const output = path.join(OUTPUT_DIR, 'log-text');
       const input = path.join(FIXTURES_DIR, 'resume-short-en.md');
-      const result = runCLI(`-i ${input} -o ${output} --debug`);
+      const result = runCLI(`-i ${input} -o ${output} --verbose`);
 
       expect(result.exitCode).toBe(0);
       expect(result.stdout).toContain('DEBUG');
@@ -308,7 +409,7 @@ describe('CLI E2E Tests', () => {
     it('should output text format logs with --log-format text', () => {
       const output = path.join(OUTPUT_DIR, 'log-text-explicit');
       const input = path.join(FIXTURES_DIR, 'resume-short-en.md');
-      const result = runCLI(`-i ${input} -o ${output} --debug --log-format text`);
+      const result = runCLI(`-i ${input} -o ${output} --verbose --log-format text`);
 
       expect(result.exitCode).toBe(0);
       expect(result.stdout).toContain('DEBUG');
@@ -317,7 +418,7 @@ describe('CLI E2E Tests', () => {
     it('should output JSON format logs with --log-format json', () => {
       const output = path.join(OUTPUT_DIR, 'log-json');
       const input = path.join(FIXTURES_DIR, 'resume-short-en.md');
-      const result = runCLI(`-i ${input} -o ${output} --debug --log-format json`);
+      const result = runCLI(`-i ${input} -o ${output} --verbose --log-format json`);
 
       expect(result.exitCode).toBe(0);
       // JSON format should have structured output
@@ -327,10 +428,10 @@ describe('CLI E2E Tests', () => {
     });
   });
 
-  describe('Debug Mode (--debug, --verbose)', () => {
+  describe('Debug Mode (--verbose)', () => {
     beforeAll(() => cleanOutput());
 
-    it('should not show debug logs without --debug', () => {
+    it('should not show debug logs without --verbose', () => {
       const output = path.join(OUTPUT_DIR, 'debug-off');
       const input = path.join(FIXTURES_DIR, 'resume-short-en.md');
       const result = runCLI(`-i ${input} -o ${output} --log-format json`);
@@ -338,15 +439,6 @@ describe('CLI E2E Tests', () => {
       expect(result.exitCode).toBe(0);
       expect(result.stdout).not.toContain('"level":"DEBUG"');
       expect(result.stdout).toContain('"level":"INFO"');
-    });
-
-    it('should show debug logs with --debug', () => {
-      const output = path.join(OUTPUT_DIR, 'debug-on');
-      const input = path.join(FIXTURES_DIR, 'resume-short-en.md');
-      const result = runCLI(`-i ${input} -o ${output} --debug --log-format json`);
-
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('"level":"DEBUG"');
     });
 
     it('should show debug logs with --verbose', () => {
@@ -390,7 +482,7 @@ describe('CLI E2E Tests', () => {
       const output = path.join(OUTPUT_DIR, 'combined');
       const input = path.join(FIXTURES_DIR, 'resume-rirekisho-ja.md');
       const result = runCLI(
-        `-i ${input} -o ${output} -f both -t both -p a3 --debug --log-format json`,
+        `-i ${input} -o ${output} -f both -t both -p a3 --verbose --log-format json`,
       );
 
       expect(result.exitCode).toBe(0);
@@ -470,6 +562,142 @@ describe('CLI E2E Tests', () => {
       expect(fileExists(`${output}_cv.pdf`)).toBe(true);
       // Clean up nested directories
       fs.rmSync(path.join(OUTPUT_DIR, 'nested'), { recursive: true });
+    });
+  });
+
+  describe('Rirekisho Extreme Content', () => {
+    beforeAll(() => cleanOutput());
+
+    const paperSizes = ['a3', 'a4', 'b4', 'b5', 'letter'];
+
+    for (const size of paperSizes) {
+      it(`should handle extreme content on ${size.toUpperCase()} paper`, () => {
+        const output = path.join(OUTPUT_DIR, `rirekisho-extreme-${size}`);
+        const input = path.join(FIXTURES_DIR, 'resume-rirekisho-extreme-ja.md');
+        const result = runCLI(`-i ${input} -o ${output} -f rirekisho -t both -p ${size}`);
+
+        expect(result.exitCode).toBe(0);
+        expect(fileExists(`${output}_rirekisho.html`)).toBe(true);
+        expect(fileExists(`${output}_rirekisho.pdf`)).toBe(true);
+
+        const html = fs.readFileSync(`${output}_rirekisho.html`, 'utf-8');
+
+        // Verify long name is present
+        expect(html).toContain('山田 太郎之介左衛門尉源朝臣義経公');
+
+        // Verify long address is present
+        expect(html).toContain('グランドタワーマンション');
+
+        // Verify long email is present (may be truncated in display)
+        expect(html).toContain('taro.yamada.very.long.email');
+
+        // Verify many education/work history entries
+        expect(html).toContain('ハーバード大学');
+        expect(html).toContain('長島・大野・常松法律事務所');
+
+        // Verify many certifications
+        expect(html).toContain('司法試験合格');
+        expect(html).toContain('ニューヨーク州弁護士資格');
+
+        // Verify long motivation text
+        expect(html).toContain('デジタルトランスフォーメーション');
+
+        // Verify long notes text
+        expect(html).toContain('ハイブリッド形態');
+
+        // Verify basic structure is intact
+        expect(html).toContain('class="spread"');
+        expect(html).toContain('class="page page--left"');
+        expect(html).toContain('class="page page--right"');
+      });
+    }
+
+    it('should generate PDF without errors for extreme content', () => {
+      const output = path.join(OUTPUT_DIR, 'rirekisho-extreme-pdf');
+      const input = path.join(FIXTURES_DIR, 'resume-rirekisho-extreme-ja.md');
+      const result = runCLI(`-i ${input} -o ${output} -f rirekisho -t pdf -p a4`);
+
+      expect(result.exitCode).toBe(0);
+      expect(fileExists(`${output}_rirekisho.pdf`)).toBe(true);
+
+      // Check PDF file size is reasonable (not empty, not corrupted)
+      const stats = fs.statSync(`${output}_rirekisho.pdf`);
+      expect(stats.size).toBeGreaterThan(10000); // At least 10KB
+    });
+  });
+
+  describe('Rirekisho Overflow Handling', () => {
+    beforeAll(() => cleanOutput());
+
+    describe('Normal case (borderline-pass)', () => {
+      const paperSizes = ['a3', 'a4', 'b4', 'b5', 'letter'];
+
+      for (const size of paperSizes) {
+        it(`should succeed on ${size.toUpperCase()} with normal data`, () => {
+          const output = path.join(OUTPUT_DIR, `rirekisho-borderline-pass-${size}`);
+          const input = path.join(FIXTURES_DIR, 'resume-rirekisho-borderline-pass-ja.md');
+          const result = runCLI(`-i ${input} -o ${output} -f rirekisho -t html -p ${size}`);
+
+          expect(result.exitCode).toBe(0);
+          expect(fileExists(`${output}_rirekisho.html`)).toBe(true);
+        });
+      }
+    });
+
+    describe('Borderline case (borderline-fail)', () => {
+      // This fixture has enough data to fail on most sizes but passes on letter
+      // due to different preferred row counts and scale factors
+      const failingSizes = ['a3', 'a4', 'b4', 'b5'];
+      const passingSizes = ['letter'];
+
+      for (const size of failingSizes) {
+        it(`should fail on ${size.toUpperCase()} with borderline data`, () => {
+          const output = path.join(OUTPUT_DIR, `rirekisho-borderline-fail-${size}`);
+          const input = path.join(FIXTURES_DIR, 'resume-rirekisho-borderline-fail-ja.md');
+          const result = runCLI(`-i ${input} -o ${output} -f rirekisho -t html -p ${size}`);
+
+          expect(result.exitCode).toBe(1);
+          expect(result.stderr).toContain('データが多すぎてページに収まりません');
+          expect(fileExists(`${output}_rirekisho.html`)).toBe(false);
+        });
+      }
+
+      for (const size of passingSizes) {
+        it(`should succeed on ${size.toUpperCase()} with borderline data`, () => {
+          const output = path.join(OUTPUT_DIR, `rirekisho-borderline-fail-${size}`);
+          const input = path.join(FIXTURES_DIR, 'resume-rirekisho-borderline-fail-ja.md');
+          const result = runCLI(`-i ${input} -o ${output} -f rirekisho -t html -p ${size}`);
+
+          expect(result.exitCode).toBe(0);
+          expect(fileExists(`${output}_rirekisho.html`)).toBe(true);
+        });
+      }
+    });
+
+    describe('Complete overflow case', () => {
+      const paperSizes = ['a3', 'a4', 'b4', 'b5', 'letter'];
+
+      for (const size of paperSizes) {
+        it(`should fail on ${size.toUpperCase()} with overflow data`, () => {
+          const output = path.join(OUTPUT_DIR, `rirekisho-overflow-${size}`);
+          const input = path.join(FIXTURES_DIR, 'resume-rirekisho-overflow-ja.md');
+          const result = runCLI(`-i ${input} -o ${output} -f rirekisho -t html -p ${size}`);
+
+          expect(result.exitCode).toBe(1);
+          expect(result.stderr).toContain('データが多すぎてページに収まりません');
+          expect(fileExists(`${output}_rirekisho.html`)).toBe(false);
+        });
+      }
+    });
+
+    it('should show Japanese error message for overflow', () => {
+      const output = path.join(OUTPUT_DIR, 'rirekisho-overflow-error-msg');
+      const input = path.join(FIXTURES_DIR, 'resume-rirekisho-overflow-ja.md');
+      const result = runCLI(`-i ${input} -o ${output} -f rirekisho -t html -p a3`);
+
+      expect(result.exitCode).toBe(1);
+      expect(result.stderr).toContain('データが多すぎてページに収まりません');
+      expect(result.stderr).toContain('学歴・職歴または免許・資格の数を減らしてください');
     });
   });
 });

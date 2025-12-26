@@ -131,8 +131,8 @@ export interface EducationEntry {
   readonly school: string;
   readonly degree: string | undefined;
   readonly location: string | undefined;
-  readonly start: string | undefined;
-  readonly end: string | undefined;
+  readonly start: Date | undefined;
+  readonly end: Date | undefined;
   readonly details: readonly string[] | undefined;
 }
 
@@ -141,8 +141,8 @@ export interface EducationEntry {
  */
 export interface ProjectEntry {
   readonly name: string;
-  readonly start: string | undefined;
-  readonly end: string | undefined;
+  readonly start: Date | undefined;
+  readonly end: Date | undefined;
   readonly bullets: readonly string[] | undefined;
 }
 
@@ -152,8 +152,8 @@ export interface ProjectEntry {
 export interface RoleEntry {
   readonly title: string;
   readonly team: string | undefined;
-  readonly start: string | undefined;
-  readonly end: string | undefined;
+  readonly start: Date | undefined;
+  readonly end: Date | 'present' | undefined;
   readonly summary: readonly string[] | undefined;
   readonly highlights: readonly string[] | undefined;
   readonly projects: readonly ProjectEntry[] | undefined;
@@ -174,7 +174,7 @@ export interface ExperienceEntry {
 export interface CertificationEntry {
   readonly name: string;
   readonly issuer: string | undefined;
-  readonly date: string | undefined;
+  readonly date: Date | undefined;
   readonly url: string | undefined;
 }
 

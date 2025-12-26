@@ -52,22 +52,26 @@ function escapeHtml(text: string): string {
 /**
  * Format date for Japanese display
  */
-function formatDate(dateStr: string | undefined): string {
-  if (!dateStr) return '';
-  if (dateStr.toLowerCase() === 'present' || dateStr === '現在') return '現在';
-  const match = dateStr.match(/^(\d{4})-(\d{1,2})(?:-\d{1,2})?$/);
-  if (match) {
-    return `${match[1]}年${match[2]}月`;
-  }
-  return dateStr;
+function formatDate(date: Date | undefined): string {
+  if (!date) return '';
+  return `${date.getFullYear()}年${date.getMonth() + 1}月`;
+}
+
+/**
+ * Format end date which can be Date or 'present'
+ */
+function formatEndDate(end: Date | 'present' | undefined): string {
+  if (!end) return '';
+  if (end === 'present') return '現在';
+  return formatDate(end);
 }
 
 /**
  * Format date range
  */
-function formatDateRange(start: string | undefined, end: string | undefined): string {
+function formatDateRange(start: Date | undefined, end: Date | 'present' | undefined): string {
   const startStr = formatDate(start);
-  const endStr = formatDate(end);
+  const endStr = formatEndDate(end);
   if (startStr && endStr) return `${startStr} - ${endStr}`;
   if (startStr) return startStr;
   return '';
