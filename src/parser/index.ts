@@ -28,8 +28,10 @@ import {
 import {
   findSectionByTag,
   type CertificationEntry,
+  type CompetencyEntry,
   type EducationEntry,
   type ExperienceEntry,
+  type LanguageEntry,
   type ParsedSection,
   type ProjectEntry,
   type RoleEntry,
@@ -309,6 +311,16 @@ function parseGender(str: string | undefined): Gender {
 }
 
 /**
+ * Parse summary which can be a string or an array of strings
+ */
+function parseSummary(value: unknown): readonly string[] | undefined {
+  if (!value) return undefined;
+  if (typeof value === 'string') return [value];
+  if (Array.isArray(value)) return value.map((s) => safeString(s));
+  return undefined;
+}
+
+/**
  * Parse resume:education code block
  */
 function parseEducationBlock(code: string): EducationEntry[] {
@@ -371,9 +383,7 @@ function parseExperienceBlock(code: string): ExperienceEntry[] {
             team: safeOptionalString(role.team),
             start: parseYearMonth(safeOptionalString(role.start)),
             end: parseEndDate(safeOptionalString(role.end)),
-            summary: Array.isArray(role.summary)
-              ? role.summary.map((s) => safeString(s))
-              : undefined,
+            summary: parseSummary(role.summary),
             highlights: Array.isArray(role.highlights)
               ? role.highlights.map((h) => safeString(h))
               : undefined,
@@ -403,7 +413,7 @@ function parseExperienceBlock(code: string): ExperienceEntry[] {
           team: safeOptionalString(obj.team),
           start: parseYearMonth(safeOptionalString(obj.start)),
           end: parseEndDate(safeOptionalString(obj.end)),
-          summary: Array.isArray(obj.summary) ? obj.summary.map((s) => safeString(s)) : undefined,
+          summary: parseSummary(obj.summary),
           highlights: Array.isArray(obj.highlights)
             ? obj.highlights.map((h) => safeString(h))
             : undefined,
@@ -447,8 +457,62 @@ function parseCertificationsBlock(code: string): CertificationEntry[] {
 
 /**
  * Parse resume:skills code block
+ * Supports two formats:
+ * 1. Simple items list with optional columns:
+ *    columns: 3
+ *    items:
+ *      - JavaScript
+ *      - TypeScript
+ * 2. Categorized skills (legacy):
+ *    - category: Programming
+ *      items: [JavaScript, TypeScript]
  */
-function parseSkillsBlock(code: string): SkillEntry[] {
+interface ParsedSkillsResult {
+  entries: SkillEntry[];
+  columns: number | undefined;
+}
+
+function parseSkillsBlock(code: string): ParsedSkillsResult {
+  try {
+    const parsed: unknown = parseYaml(code);
+
+    // Check if it's the new format with columns and items at top level
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      const obj = parsed as Record<string, unknown>;
+
+      // New format: { columns?: number, items: string[] }
+      if (Array.isArray(obj.items) && obj.items.every((i) => typeof i === 'string')) {
+        const columns = typeof obj.columns === 'number' ? obj.columns : undefined;
+        const items = obj.items.map((i) => safeString(i));
+        // Convert to single SkillEntry with empty category
+        return {
+          entries: [{ category: '', items, level: undefined }],
+          columns,
+        };
+      }
+    }
+
+    // Legacy format: array of { category, items, level }
+    const items = Array.isArray(parsed) ? parsed : [parsed];
+    const entries = items.map((item: unknown) => {
+      const obj = item as Record<string, unknown>;
+      return {
+        category: safeString(obj.category),
+        items: Array.isArray(obj.items) ? obj.items.map((i) => safeString(i)) : [],
+        level: safeOptionalString(obj.level),
+      };
+    });
+
+    return { entries, columns: undefined };
+  } catch {
+    return { entries: [], columns: undefined };
+  }
+}
+
+/**
+ * Parse resume:competencies code block
+ */
+function parseCompetenciesBlock(code: string): CompetencyEntry[] {
   try {
     const parsed: unknown = parseYaml(code);
     // Handle both single object and array
@@ -457,8 +521,28 @@ function parseSkillsBlock(code: string): SkillEntry[] {
     return items.map((item: unknown) => {
       const obj = item as Record<string, unknown>;
       return {
-        category: safeString(obj.category),
-        items: Array.isArray(obj.items) ? obj.items.map((i) => safeString(i)) : [],
+        header: safeString(obj.header),
+        description: safeString(obj.description),
+      };
+    });
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Parse resume:languages code block
+ */
+function parseLanguagesBlock(code: string): LanguageEntry[] {
+  try {
+    const parsed: unknown = parseYaml(code);
+    // Handle both single object and array
+    const items = Array.isArray(parsed) ? parsed : [parsed];
+
+    return items.map((item: unknown) => {
+      const obj = item as Record<string, unknown>;
+      return {
+        language: safeString(obj.language),
         level: safeOptionalString(obj.level),
       };
     });
@@ -476,6 +560,9 @@ function parseSectionContent(nodes: RootContent[]): SectionContent {
   const experienceEntries: ExperienceEntry[] = [];
   const certificationEntries: CertificationEntry[] = [];
   const skillEntries: SkillEntry[] = [];
+  const competencyEntries: CompetencyEntry[] = [];
+  const languageEntries: LanguageEntry[] = [];
+  let skillsColumns: number | undefined = undefined;
 
   for (const node of nodes) {
     if (node.type === 'code') {
@@ -487,7 +574,15 @@ function parseSectionContent(nodes: RootContent[]): SectionContent {
       } else if (codeNode.lang === 'resume:certifications') {
         certificationEntries.push(...parseCertificationsBlock(codeNode.value));
       } else if (codeNode.lang === 'resume:skills') {
-        skillEntries.push(...parseSkillsBlock(codeNode.value));
+        const result = parseSkillsBlock(codeNode.value);
+        skillEntries.push(...result.entries);
+        if (result.columns !== undefined) {
+          skillsColumns = result.columns;
+        }
+      } else if (codeNode.lang === 'resume:competencies') {
+        competencyEntries.push(...parseCompetenciesBlock(codeNode.value));
+      } else if (codeNode.lang === 'resume:languages') {
+        languageEntries.push(...parseLanguagesBlock(codeNode.value));
       }
     }
   }
@@ -503,7 +598,13 @@ function parseSectionContent(nodes: RootContent[]): SectionContent {
     return { type: 'certifications', entries: certificationEntries };
   }
   if (skillEntries.length > 0) {
-    return { type: 'skills', entries: skillEntries };
+    return { type: 'skills', entries: skillEntries, options: { columns: skillsColumns } };
+  }
+  if (competencyEntries.length > 0) {
+    return { type: 'competencies', entries: competencyEntries };
+  }
+  if (languageEntries.length > 0) {
+    return { type: 'languages', entries: languageEntries };
   }
 
   // Check for tables

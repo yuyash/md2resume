@@ -1,17 +1,20 @@
 /**
  * English CV Generator
- * Generates HTML for English CV format
+ * Generates HTML for English CV format with Times font family
  */
 
 import type { PaperSize } from '../types/config.js';
 import type { CVMetadata } from '../types/metadata.js';
 import type {
   CertificationEntry,
+  CompetencyEntry,
   EducationEntry,
   ExperienceEntry,
+  LanguageEntry,
   ParsedSection,
   SectionContent,
   SkillEntry,
+  SkillsOptions,
 } from '../types/sections.js';
 
 export interface CVEnOptions {
@@ -36,6 +39,11 @@ const PAGE_SIZES: Record<PaperSize, { width: number; height: number }> = {
   b5: { width: 176, height: 250 },
   letter: { width: 215.9, height: 279.4 },
 };
+
+/**
+ * Section order for English CV
+ */
+const SECTION_ORDER = ['summary', 'motivation', 'experience', 'education', 'skills'];
 
 /**
  * Escape HTML special characters
@@ -108,9 +116,9 @@ function generateStyles(paperSize: PaperSize): string {
       box-sizing: border-box;
     }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-family: "Times New Roman", Times, serif;
       font-size: 11pt;
-      line-height: 1.5;
+      line-height: 1.4;
       color: #333;
       background: #fff;
       max-width: 800px;
@@ -119,35 +127,40 @@ function generateStyles(paperSize: PaperSize): string {
     }
     header {
       text-align: center;
-      margin-bottom: 20px;
-      padding-bottom: 15px;
-      border-bottom: 2px solid #2c3e50;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
     }
     h1 {
-      color: #2c3e50;
-      font-size: 24pt;
-      margin-bottom: 8px;
+      font-size: 20pt;
+      font-weight: bold;
+      margin-bottom: 6px;
+      color: #000;
     }
     .contact-info {
-      color: #666;
       font-size: 10pt;
+      color: #333;
     }
     .contact-info a {
-      color: #3498db;
+      color: #333;
       text-decoration: none;
     }
+    .contact-info a:hover {
+      text-decoration: underline;
+    }
     section {
-      margin-bottom: 18px;
+      margin-bottom: 14px;
     }
     h2 {
-      color: #2c3e50;
-      font-size: 13pt;
-      border-bottom: 1px solid #bdc3c7;
-      padding-bottom: 4px;
-      margin-bottom: 10px;
+      font-size: 12pt;
+      font-weight: bold;
+      text-transform: uppercase;
+      border-bottom: 1px solid #333;
+      padding-bottom: 2px;
+      margin-bottom: 8px;
+      color: #000;
     }
     .entry {
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
     .entry-header {
       display: flex;
@@ -157,38 +170,39 @@ function generateStyles(paperSize: PaperSize): string {
     }
     .entry-title {
       font-weight: bold;
-      color: #34495e;
+      color: #000;
     }
     .entry-subtitle {
       font-style: italic;
-      color: #555;
+      color: #333;
       font-size: 10pt;
     }
     .entry-date {
-      color: #666;
+      color: #333;
       font-size: 10pt;
     }
     .entry-location {
-      color: #777;
+      color: #555;
       font-size: 10pt;
     }
     .entry-summary {
-      margin-top: 4px;
+      margin-top: 3px;
       font-size: 10pt;
     }
     ul {
       margin-left: 18px;
-      margin-top: 4px;
+      margin-top: 3px;
     }
     li {
       margin-bottom: 2px;
       font-size: 10pt;
     }
     p {
-      margin-bottom: 8px;
+      margin-bottom: 6px;
+      font-size: 10pt;
     }
     .role {
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
     .role-header {
       display: flex;
@@ -197,10 +211,25 @@ function generateStyles(paperSize: PaperSize): string {
     }
     .project {
       margin-left: 15px;
-      margin-top: 6px;
+      margin-top: 4px;
     }
     .project-name {
       font-weight: 500;
+      font-size: 10pt;
+    }
+    .competency-entry {
+      margin-bottom: 4px;
+      font-size: 10pt;
+    }
+    .competency-header {
+      font-weight: bold;
+    }
+    .skills-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 2px 20px;
+    }
+    .skill-item {
       font-size: 10pt;
     }
     @media print {
@@ -214,24 +243,38 @@ function generateStyles(paperSize: PaperSize): string {
 
 /**
  * Render education section
+ * Format:
+ *   <school> —— <start - end>
+ *   <degree> — <location>
+ *   <details>
  */
 function renderEducation(entries: readonly EducationEntry[]): string {
   return entries
     .map((entry) => {
       const dateRange = formatDateRange(entry.start, entry.end);
       let html = '<div class="entry">';
+
+      // Title line: <school> —— <date range>
       html += '<div class="entry-header">';
       html += `<span class="entry-title">${escapeHtml(entry.school)}</span>`;
       if (dateRange) {
         html += `<span class="entry-date">${escapeHtml(dateRange)}</span>`;
       }
       html += '</div>';
+
+      // Subtitle line: <degree> — <location>
+      const subtitleParts: string[] = [];
       if (entry.degree) {
-        html += `<div class="entry-subtitle">${escapeHtml(entry.degree)}</div>`;
+        subtitleParts.push(escapeHtml(entry.degree));
       }
       if (entry.location) {
-        html += `<div class="entry-location">${escapeHtml(entry.location)}</div>`;
+        subtitleParts.push(escapeHtml(entry.location));
       }
+      if (subtitleParts.length > 0) {
+        html += `<div class="entry-subtitle">${subtitleParts.join(' — ')}</div>`;
+      }
+
+      // Details
       if (entry.details && entry.details.length > 0) {
         html += '<ul>';
         for (const detail of entry.details) {
@@ -247,36 +290,47 @@ function renderEducation(entries: readonly EducationEntry[]): string {
 
 /**
  * Render experience section
+ * Format:
+ *   <company name> -- <role>        <start - end>
+ *   <team_name> -- <location>
+ *   <summary>
+ *   <highlights>
  */
 function renderExperience(entries: readonly ExperienceEntry[]): string {
   return entries
-    .map((entry) => {
-      let html = '<div class="entry">';
-      html += `<div class="entry-title">${escapeHtml(entry.company)}</div>`;
-      if (entry.location) {
-        html += `<div class="entry-location">${escapeHtml(entry.location)}</div>`;
-      }
-
-      for (const role of entry.roles) {
+    .flatMap((entry) => {
+      return entry.roles.map((role) => {
         const dateRange = formatDateRange(role.start, role.end);
-        html += '<div class="role">';
-        html += '<div class="role-header">';
-        html += `<span class="entry-subtitle">${escapeHtml(role.title)}`;
-        if (role.team) {
-          html += ` - ${escapeHtml(role.team)}`;
-        }
-        html += '</span>';
+        let html = '<div class="entry">';
+
+        // Section title: <company> —— <role>    <date range>
+        html += '<div class="entry-header">';
+        html += `<span class="entry-title">${escapeHtml(entry.company)} —— ${escapeHtml(role.title)}</span>`;
         if (dateRange) {
           html += `<span class="entry-date">${escapeHtml(dateRange)}</span>`;
         }
         html += '</div>';
 
+        // Sub title: <team> — <location>
+        const subtitleParts: string[] = [];
+        if (role.team) {
+          subtitleParts.push(escapeHtml(role.team));
+        }
+        if (entry.location) {
+          subtitleParts.push(escapeHtml(entry.location));
+        }
+        if (subtitleParts.length > 0) {
+          html += `<div class="entry-subtitle">${subtitleParts.join(' — ')}</div>`;
+        }
+
+        // Summary
         if (role.summary && role.summary.length > 0) {
           html += '<div class="entry-summary">';
           html += role.summary.map((s) => escapeHtml(s)).join(' ');
           html += '</div>';
         }
 
+        // Highlights
         if (role.highlights && role.highlights.length > 0) {
           html += '<ul>';
           for (const highlight of role.highlights) {
@@ -285,6 +339,7 @@ function renderExperience(entries: readonly ExperienceEntry[]): string {
           html += '</ul>';
         }
 
+        // Projects
         if (role.projects && role.projects.length > 0) {
           for (const project of role.projects) {
             const projDateRange = formatDateRange(project.start, project.end);
@@ -305,10 +360,8 @@ function renderExperience(entries: readonly ExperienceEntry[]): string {
         }
 
         html += '</div>';
-      }
-
-      html += '</div>';
-      return html;
+        return html;
+      });
     })
     .join('\n');
 }
@@ -336,34 +389,90 @@ function renderCertifications(entries: readonly CertificationEntry[]): string {
 }
 
 /**
- * Render skills section
+ * Default number of columns for skills grid
  */
-function renderSkills(entries: readonly SkillEntry[]): string {
+const DEFAULT_SKILLS_COLUMNS = 3;
+
+/**
+ * Render skills section as grid
+ */
+function renderSkills(entries: readonly SkillEntry[], options: SkillsOptions): string {
+  // Flatten all skill items into a single list
+  const allItems: string[] = [];
+  for (const entry of entries) {
+    for (const item of entry.items) {
+      allItems.push(item);
+    }
+  }
+
+  if (allItems.length === 0) {
+    return '';
+  }
+
+  const columns = options.columns ?? DEFAULT_SKILLS_COLUMNS;
+  let html = `<div class="skills-grid" style="grid-template-columns: repeat(${columns}, 1fr);">`;
+  for (const item of allItems) {
+    html += `<div class="skill-item">• ${escapeHtml(item)}</div>`;
+  }
+  html += '</div>';
+  return html;
+}
+
+/**
+ * Render skills from list content as grid
+ */
+function renderSkillsList(items: readonly string[], columns: number = DEFAULT_SKILLS_COLUMNS): string {
+  if (items.length === 0) {
+    return '';
+  }
+
+  let html = `<div class="skills-grid" style="grid-template-columns: repeat(${columns}, 1fr);">`;
+  for (const item of items) {
+    html += `<div class="skill-item">• ${escapeHtml(item)}</div>`;
+  }
+  html += '</div>';
+  return html;
+}
+
+/**
+ * Render core competencies section
+ */
+function renderCompetencies(entries: readonly CompetencyEntry[]): string {
   return entries
     .map((entry) => {
-      let html = '<div class="entry">';
-      html += `<div class="entry-title">${escapeHtml(entry.category)}`;
-      if (entry.level) {
-        html += ` <span class="entry-date">(${escapeHtml(entry.level)})</span>`;
-      }
-      html += '</div>';
-      if (entry.items.length > 0) {
-        html += `<div class="entry-subtitle">${entry.items.map((i) => escapeHtml(i)).join(', ')}</div>`;
-      }
-      html += '</div>';
-      return html;
+      return `<div class="competency-entry"><span class="competency-header">${escapeHtml(entry.header)}:</span> ${escapeHtml(entry.description)}</div>`;
     })
     .join('\n');
 }
 
 /**
+ * Render languages section
+ */
+function renderLanguages(entries: readonly LanguageEntry[]): string {
+  return entries
+    .map((entry) => {
+      let html = `<span>${escapeHtml(entry.language)}`;
+      if (entry.level) {
+        html += ` (${escapeHtml(entry.level)})`;
+      }
+      html += '</span>';
+      return html;
+    })
+    .join(' • ');
+}
+
+/**
  * Render section content
  */
-function renderSectionContent(content: SectionContent): string {
+function renderSectionContent(content: SectionContent, sectionId: string): string {
   switch (content.type) {
     case 'text':
       return `<p>${escapeHtml(content.text)}</p>`;
     case 'list':
+      // For skills section, render as grid
+      if (sectionId === 'skills') {
+        return renderSkillsList(content.items);
+      }
       return (
         '<ul>' + content.items.map((item) => `<li>${escapeHtml(item)}</li>`).join('\n') + '</ul>'
       );
@@ -374,7 +483,11 @@ function renderSectionContent(content: SectionContent): string {
     case 'certifications':
       return renderCertifications(content.entries);
     case 'skills':
-      return renderSkills(content.entries);
+      return renderSkills(content.entries, content.options);
+    case 'competencies':
+      return renderCompetencies(content.entries);
+    case 'languages':
+      return renderLanguages(content.entries);
     case 'table':
       // Tables are mainly for rirekisho, render as list for resume
       return (
@@ -388,21 +501,54 @@ function renderSectionContent(content: SectionContent): string {
 }
 
 /**
- * Render contact info
+ * Render contact info line: home_address | phone_number | email | linkedin
  */
 function renderContactInfo(cv: CVInput): string {
   const parts: string[] = [];
-
-  parts.push(
-    `<a href="mailto:${escapeHtml(cv.metadata.email_address)}">${escapeHtml(cv.metadata.email_address)}</a>`,
-  );
-  parts.push(escapeHtml(cv.metadata.phone_number));
 
   if (cv.metadata.home_address) {
     parts.push(escapeHtml(cv.metadata.home_address));
   }
 
+  parts.push(escapeHtml(cv.metadata.phone_number));
+
+  parts.push(
+    `<a href="mailto:${escapeHtml(cv.metadata.email_address)}">${escapeHtml(cv.metadata.email_address)}</a>`,
+  );
+
+  if (cv.metadata.linkedin) {
+    const linkedinUrl = cv.metadata.linkedin;
+    parts.push(`<a href="${escapeHtml(linkedinUrl)}">${escapeHtml(linkedinUrl)}</a>`);
+  }
+
   return parts.join(' | ');
+}
+
+/**
+ * Sort sections according to SECTION_ORDER
+ */
+function sortSections(sections: readonly ParsedSection[]): ParsedSection[] {
+  const sectionMap = new Map<string, ParsedSection>();
+  const otherSections: ParsedSection[] = [];
+
+  for (const section of sections) {
+    if (SECTION_ORDER.includes(section.id)) {
+      sectionMap.set(section.id, section);
+    } else {
+      otherSections.push(section);
+    }
+  }
+
+  const sorted: ParsedSection[] = [];
+  for (const id of SECTION_ORDER) {
+    const section = sectionMap.get(id);
+    if (section) {
+      sorted.push(section);
+    }
+  }
+
+  // Append any sections not in the predefined order
+  return [...sorted, ...otherSections];
 }
 
 /**
@@ -413,12 +559,15 @@ export function generateCVEnHTML(cv: CVInput, options: CVEnOptions): string {
   const name = cv.metadata.name;
   const contactHtml = renderContactInfo(cv);
 
-  const sectionsHtml = cv.sections
+  // Sort sections according to predefined order
+  const sortedSections = sortSections(cv.sections);
+
+  const sectionsHtml = sortedSections
     .map((section) => {
       return `
 <section>
   <h2>${escapeHtml(section.title)}</h2>
-  ${renderSectionContent(section.content)}
+  ${renderSectionContent(section.content, section.id)}
 </section>`;
     })
     .join('\n');

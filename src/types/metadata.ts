@@ -101,6 +101,11 @@ export const METADATA_FIELDS: Record<string, MetadataFieldDef> = {
     frontmatterKeys: ['dob', 'date_of_birth'],
     required: false,
   },
+  linkedin: {
+    envVars: ['LINKEDIN', 'LINKEDIN_URL'],
+    frontmatterKeys: ['linkedin', 'linkedin_url'],
+    required: false,
+  },
 } as const;
 
 /**
@@ -131,6 +136,9 @@ export interface CVMetadata {
   // Optional personal info
   readonly gender?: Gender;
   readonly dob?: Date;
+
+  // Optional social/professional links
+  readonly linkedin?: string;
 }
 
 // Alias for backward compatibility

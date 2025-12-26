@@ -101,7 +101,7 @@ describe('CLI E2E Tests', () => {
 
     it('should generate cv format (default)', () => {
       const output = path.join(OUTPUT_DIR, 'format-default');
-      const input = path.join(FIXTURES_DIR, 'resume-short-en.md');
+      const input = path.join(FIXTURES_DIR, 'resume-en.md');
       const result = runCLI(`-i ${input} -o ${output}`);
 
       expect(result.exitCode).toBe(0);
@@ -110,7 +110,7 @@ describe('CLI E2E Tests', () => {
 
     it('should generate cv format with -f cv', () => {
       const output = path.join(OUTPUT_DIR, 'format-cv');
-      const input = path.join(FIXTURES_DIR, 'resume-short-en.md');
+      const input = path.join(FIXTURES_DIR, 'resume-en.md');
       const result = runCLI(`-i ${input} -o ${output} -f cv`);
 
       expect(result.exitCode).toBe(0);
@@ -142,7 +142,7 @@ describe('CLI E2E Tests', () => {
 
     it('should generate PDF (default)', () => {
       const output = path.join(OUTPUT_DIR, 'type-default');
-      const input = path.join(FIXTURES_DIR, 'resume-short-en.md');
+      const input = path.join(FIXTURES_DIR, 'resume-en.md');
       const result = runCLI(`-i ${input} -o ${output}`);
 
       expect(result.exitCode).toBe(0);
@@ -152,7 +152,7 @@ describe('CLI E2E Tests', () => {
 
     it('should generate PDF with -t pdf', () => {
       const output = path.join(OUTPUT_DIR, 'type-pdf');
-      const input = path.join(FIXTURES_DIR, 'resume-short-en.md');
+      const input = path.join(FIXTURES_DIR, 'resume-en.md');
       const result = runCLI(`-i ${input} -o ${output} -t pdf`);
 
       expect(result.exitCode).toBe(0);
@@ -161,7 +161,7 @@ describe('CLI E2E Tests', () => {
 
     it('should generate HTML with -t html', () => {
       const output = path.join(OUTPUT_DIR, 'type-html');
-      const input = path.join(FIXTURES_DIR, 'resume-short-en.md');
+      const input = path.join(FIXTURES_DIR, 'resume-en.md');
       const result = runCLI(`-i ${input} -o ${output} -t html`);
 
       expect(result.exitCode).toBe(0);
@@ -171,7 +171,7 @@ describe('CLI E2E Tests', () => {
 
     it('should generate both PDF and HTML with -t both', () => {
       const output = path.join(OUTPUT_DIR, 'type-both');
-      const input = path.join(FIXTURES_DIR, 'resume-short-en.md');
+      const input = path.join(FIXTURES_DIR, 'resume-en.md');
       const result = runCLI(`-i ${input} -o ${output} -t both`);
 
       expect(result.exitCode).toBe(0);
@@ -185,7 +185,7 @@ describe('CLI E2E Tests', () => {
 
     it('should use A4 paper size (default)', () => {
       const output = path.join(OUTPUT_DIR, 'paper-default');
-      const input = path.join(FIXTURES_DIR, 'resume-short-en.md');
+      const input = path.join(FIXTURES_DIR, 'resume-en.md');
       const result = runCLI(`-i ${input} -o ${output}`);
 
       expect(result.exitCode).toBe(0);
@@ -194,7 +194,7 @@ describe('CLI E2E Tests', () => {
 
     it('should use A4 paper size with -p a4', () => {
       const output = path.join(OUTPUT_DIR, 'paper-a4');
-      const input = path.join(FIXTURES_DIR, 'resume-short-en.md');
+      const input = path.join(FIXTURES_DIR, 'resume-en.md');
       const result = runCLI(`-i ${input} -o ${output} -p a4`);
 
       expect(result.exitCode).toBe(0);
@@ -221,7 +221,7 @@ describe('CLI E2E Tests', () => {
 
     it('should use B5 paper size with -p b5', () => {
       const output = path.join(OUTPUT_DIR, 'paper-b5');
-      const input = path.join(FIXTURES_DIR, 'resume-short-en.md');
+      const input = path.join(FIXTURES_DIR, 'resume-en.md');
       const result = runCLI(`-i ${input} -o ${output} -p b5`);
 
       expect(result.exitCode).toBe(0);
@@ -230,7 +230,7 @@ describe('CLI E2E Tests', () => {
 
     it('should use Letter paper size with -p letter', () => {
       const output = path.join(OUTPUT_DIR, 'paper-letter');
-      const input = path.join(FIXTURES_DIR, 'resume-short-en.md');
+      const input = path.join(FIXTURES_DIR, 'resume-en.md');
       const result = runCLI(`-i ${input} -o ${output} -p letter`);
 
       expect(result.exitCode).toBe(0);
@@ -371,7 +371,7 @@ describe('CLI E2E Tests', () => {
     });
 
     it('should fail with non-existent config file', () => {
-      const input = path.join(FIXTURES_DIR, 'resume-short-en.md');
+      const input = path.join(FIXTURES_DIR, 'resume-en.md');
       const result = runCLI(`-i ${input} -c /non/existent/config.json`);
 
       expect(result.exitCode).not.toBe(0);
@@ -380,7 +380,7 @@ describe('CLI E2E Tests', () => {
 
     it('should override config file with CLI options', () => {
       const output = path.join(OUTPUT_DIR, 'config-override');
-      const input = path.join(FIXTURES_DIR, 'resume-short-en.md');
+      const input = path.join(FIXTURES_DIR, 'resume-en.md');
       const config = path.join(FIXTURES_DIR, 'config-full.json');
       // config has format: both, but CLI overrides to cv
       const result = runCLI(`-i ${input} -o ${output} -c ${config} -f cv -t pdf`);
@@ -396,7 +396,7 @@ describe('CLI E2E Tests', () => {
 
     it('should output text format logs (default)', () => {
       const output = path.join(OUTPUT_DIR, 'log-text');
-      const input = path.join(FIXTURES_DIR, 'resume-short-en.md');
+      const input = path.join(FIXTURES_DIR, 'resume-en.md');
       const result = runCLI(`-i ${input} -o ${output} --verbose`);
 
       expect(result.exitCode).toBe(0);
@@ -408,7 +408,7 @@ describe('CLI E2E Tests', () => {
 
     it('should output text format logs with --log-format text', () => {
       const output = path.join(OUTPUT_DIR, 'log-text-explicit');
-      const input = path.join(FIXTURES_DIR, 'resume-short-en.md');
+      const input = path.join(FIXTURES_DIR, 'resume-en.md');
       const result = runCLI(`-i ${input} -o ${output} --verbose --log-format text`);
 
       expect(result.exitCode).toBe(0);
@@ -417,7 +417,7 @@ describe('CLI E2E Tests', () => {
 
     it('should output JSON format logs with --log-format json', () => {
       const output = path.join(OUTPUT_DIR, 'log-json');
-      const input = path.join(FIXTURES_DIR, 'resume-short-en.md');
+      const input = path.join(FIXTURES_DIR, 'resume-en.md');
       const result = runCLI(`-i ${input} -o ${output} --verbose --log-format json`);
 
       expect(result.exitCode).toBe(0);
@@ -433,7 +433,7 @@ describe('CLI E2E Tests', () => {
 
     it('should not show debug logs without --verbose', () => {
       const output = path.join(OUTPUT_DIR, 'debug-off');
-      const input = path.join(FIXTURES_DIR, 'resume-short-en.md');
+      const input = path.join(FIXTURES_DIR, 'resume-en.md');
       const result = runCLI(`-i ${input} -o ${output} --log-format json`);
 
       expect(result.exitCode).toBe(0);
@@ -443,7 +443,7 @@ describe('CLI E2E Tests', () => {
 
     it('should show debug logs with --verbose', () => {
       const output = path.join(OUTPUT_DIR, 'verbose-on');
-      const input = path.join(FIXTURES_DIR, 'resume-short-en.md');
+      const input = path.join(FIXTURES_DIR, 'resume-en.md');
       const result = runCLI(`-i ${input} -o ${output} --verbose --log-format json`);
 
       expect(result.exitCode).toBe(0);
@@ -456,7 +456,7 @@ describe('CLI E2E Tests', () => {
 
     it('should generate English CV for English input', () => {
       const output = path.join(OUTPUT_DIR, 'lang-en');
-      const input = path.join(FIXTURES_DIR, 'resume-short-en.md');
+      const input = path.join(FIXTURES_DIR, 'resume-en.md');
       const result = runCLI(`-i ${input} -o ${output} -t html`);
 
       expect(result.exitCode).toBe(0);
@@ -466,7 +466,7 @@ describe('CLI E2E Tests', () => {
 
     it('should generate Japanese CV for Japanese input', () => {
       const output = path.join(OUTPUT_DIR, 'lang-ja');
-      const input = path.join(FIXTURES_DIR, 'resume-short-ja.md');
+      const input = path.join(FIXTURES_DIR, 'resume-ja.md');
       const result = runCLI(`-i ${input} -o ${output} -t html`);
 
       expect(result.exitCode).toBe(0);
@@ -497,33 +497,33 @@ describe('CLI E2E Tests', () => {
   describe('Input Files', () => {
     beforeAll(() => cleanOutput());
 
-    it('should process resume-short-en.md', () => {
+    it('should process resume-en.md', () => {
       const output = path.join(OUTPUT_DIR, 'input-short-en');
-      const input = path.join(FIXTURES_DIR, 'resume-short-en.md');
+      const input = path.join(FIXTURES_DIR, 'resume-en.md');
       const result = runCLI(`-i ${input} -o ${output}`);
 
       expect(result.exitCode).toBe(0);
     });
 
-    it('should process resume-short-ja.md', () => {
+    it('should process resume-ja.md', () => {
       const output = path.join(OUTPUT_DIR, 'input-short-ja');
-      const input = path.join(FIXTURES_DIR, 'resume-short-ja.md');
+      const input = path.join(FIXTURES_DIR, 'resume-ja.md');
       const result = runCLI(`-i ${input} -o ${output}`);
 
       expect(result.exitCode).toBe(0);
     });
 
-    it('should process resume-long-en.md', () => {
-      const output = path.join(OUTPUT_DIR, 'input-long-en');
-      const input = path.join(FIXTURES_DIR, 'resume-long-en.md');
+    it('should process resume-en.md', () => {
+      const output = path.join(OUTPUT_DIR, 'input-en');
+      const input = path.join(FIXTURES_DIR, 'resume-en.md');
       const result = runCLI(`-i ${input} -o ${output}`);
 
       expect(result.exitCode).toBe(0);
     });
 
-    it('should process resume-long-ja.md', () => {
-      const output = path.join(OUTPUT_DIR, 'input-long-ja');
-      const input = path.join(FIXTURES_DIR, 'resume-long-ja.md');
+    it('should process resume-ja.md', () => {
+      const output = path.join(OUTPUT_DIR, 'input-ja');
+      const input = path.join(FIXTURES_DIR, 'resume-ja.md');
       const result = runCLI(`-i ${input} -o ${output}`);
 
       expect(result.exitCode).toBe(0);
@@ -542,12 +542,12 @@ describe('CLI E2E Tests', () => {
     beforeAll(() => cleanOutput());
 
     it('should use input directory when output not specified', () => {
-      const input = path.join(FIXTURES_DIR, 'resume-short-en.md');
+      const input = path.join(FIXTURES_DIR, 'resume-en.md');
       const result = runCLI(`-i ${input}`);
 
       expect(result.exitCode).toBe(0);
       // Output should be in fixtures directory
-      const expectedOutput = path.join(FIXTURES_DIR, 'resume-short-en_cv.pdf');
+      const expectedOutput = path.join(FIXTURES_DIR, 'resume-en_cv.pdf');
       expect(fileExists(expectedOutput)).toBe(true);
       // Clean up
       fs.unlinkSync(expectedOutput);
@@ -555,7 +555,7 @@ describe('CLI E2E Tests', () => {
 
     it('should create output directory if not exists', () => {
       const output = path.join(OUTPUT_DIR, 'nested/deep/output');
-      const input = path.join(FIXTURES_DIR, 'resume-short-en.md');
+      const input = path.join(FIXTURES_DIR, 'resume-en.md');
       const result = runCLI(`-i ${input} -o ${output}`);
 
       expect(result.exitCode).toBe(0);

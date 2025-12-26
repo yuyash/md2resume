@@ -61,10 +61,12 @@ export const SECTION_DEFINITIONS: readonly SectionDef[] = [
       '自己PR',
       'Motivation for Applying',
       'Core Competencies',
+      'Key Competencies',
+      'Competencies',
       'Key Highlights',
       'Superpowers',
     ],
-    usage: 'rirekisho',
+    usage: 'both',
     requiredFor: [],
   },
   {
@@ -77,6 +79,12 @@ export const SECTION_DEFINITIONS: readonly SectionDef[] = [
     id: 'skills',
     tags: ['スキル', 'Skills', 'Technical Skills'],
     usage: 'both',
+    requiredFor: [],
+  },
+  {
+    id: 'languages',
+    tags: ['語学', 'Languages', 'Language Skills'],
+    usage: 'cv',
     requiredFor: [],
   },
 ] as const;
@@ -188,6 +196,29 @@ export interface SkillEntry {
 }
 
 /**
+ * Skills section options
+ */
+export interface SkillsOptions {
+  readonly columns: number | undefined;
+}
+
+/**
+ * Competency entry structure (resume:competencies block)
+ */
+export interface CompetencyEntry {
+  readonly header: string;
+  readonly description: string;
+}
+
+/**
+ * Language entry structure (resume:languages block)
+ */
+export interface LanguageEntry {
+  readonly language: string;
+  readonly level: string | undefined;
+}
+
+/**
  * Parsed section content
  */
 export type SectionContent =
@@ -196,7 +227,9 @@ export type SectionContent =
   | { readonly type: 'education'; readonly entries: readonly EducationEntry[] }
   | { readonly type: 'experience'; readonly entries: readonly ExperienceEntry[] }
   | { readonly type: 'certifications'; readonly entries: readonly CertificationEntry[] }
-  | { readonly type: 'skills'; readonly entries: readonly SkillEntry[] }
+  | { readonly type: 'skills'; readonly entries: readonly SkillEntry[]; readonly options: SkillsOptions }
+  | { readonly type: 'competencies'; readonly entries: readonly CompetencyEntry[] }
+  | { readonly type: 'languages'; readonly entries: readonly LanguageEntry[] }
   | { readonly type: 'table'; readonly rows: readonly TableRow[] };
 
 /**
