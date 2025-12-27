@@ -4,7 +4,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { calculateLayout, validateLayout } from '../../../src/generator/rirekisho/layout.js';
-import type { LayoutInput, PaperSize } from '../../../src/generator/rirekisho/types.js';
+import type { LayoutDimensions, LayoutInput, PaperSize } from '../../../src/generator/rirekisho/types.js';
 import {
     FIXED_DIMENSIONS,
     FONT_SIZE,
@@ -243,7 +243,7 @@ describe('rirekisho/layout', () => {
   });
 
   describe('validateLayout', () => {
-    const createLayout = (overflows: boolean) => {
+    const createLayout = (overflows: boolean): LayoutDimensions => {
       const input: LayoutInput = {
         paperSize: 'a3',
         hideMotivation: false,
