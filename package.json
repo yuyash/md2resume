@@ -48,11 +48,11 @@
   "license": "GPL-3.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yuyash/md2resume.git"
+    "url": "git+https://github.com/yuyash/md2cv.git"
   },
-  "homepage": "https://github.com/yuyash/md2resume#readme",
+  "homepage": "https://github.com/yuyash/md2cv#readme",
   "bugs": {
-    "url": "https://github.com/yuyash/md2resume/issues"
+    "url": "https://github.com/yuyash/md2cv/issues"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
