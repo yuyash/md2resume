@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3](https://github.com/yuyash/md2cv/compare/v1.0.2...v1.0.3) (2025-12-27)
+
+
+### Bug Fixes
+
+* add workflow_dispatch to publish workflow ([1a5436f](https://github.com/yuyash/md2cv/commit/1a5436f45429b647c96107b04d967ebd5239e5a9))
+* add workflow_dispatch to publish workflow ([f9fd856](https://github.com/yuyash/md2cv/commit/f9fd856458caebbc31f31b17f8a54bb0b3773325))
+
 ## [1.0.2](https://github.com/yuyash/md2cv/compare/v1.0.1...v1.0.2) (2025-12-27)
 
 
