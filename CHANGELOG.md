@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0](https://github.com/yuyash/md2cv/compare/v1.0.5...v1.1.0) (2025-12-28)
+
+
+### Features
+
+* add custom stylesheet support for CV and rirekisho ([#10](https://github.com/yuyash/md2cv/issues/10)) ([8a7a777](https://github.com/yuyash/md2cv/commit/8a7a7774f797be569f23824e50efbbfe2fde3648))
+
 ## [1.0.5](https://github.com/yuyash/md2cv/compare/v1.0.4...v1.0.5) (2025-12-27)
 
 
