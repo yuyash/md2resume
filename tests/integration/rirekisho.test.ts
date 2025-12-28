@@ -464,8 +464,8 @@ describe('rirekisho integration', () => {
       expect(html).toContain('<html lang="ja">');
       expect(html).toContain('</html>');
 
-      // Should contain CSS
-      expect(html).toContain('<style>');
+      // Should contain CSS (with optional class attribute)
+      expect(html).toMatch(/<style[^>]*>/);
       expect(html).toContain('</style>');
 
       // Should contain personal info

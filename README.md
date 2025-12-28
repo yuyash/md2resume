@@ -2,7 +2,7 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-md2cv is a command-line tool that transforms Markdown documents into formatted PDF and HTML resumes. Simply write your CV in Markdown, and let md2cv handle the formatting and layout. The tool supports both western-style CVs and Japanese-style documents including rirekisho (履歴書) and shokumu-keirekisho (職務経歴書), making it ideal for international job seekers.
+md2cv is a command-line tool that transforms Markdown documents into formatted PDF and HTML resumes. Simply write your CV in Markdown, and let md2cv handle the formatting and layout. The tool supports both western-style CVs and Japanese-style documents including rirekisho (履歴書) and shokumu-keirekisho (職務経歴書).
 
 ## Key Features
 
@@ -59,6 +59,9 @@ md2cv -i examples/example-cv-en.md --section-order "summary,experience,skills,ed
 # Generate CV with oldest experience first
 md2cv -i examples/example-cv-en.md --order asc
 
+# Apply custom stylesheet
+md2cv -i examples/example-cv-en.md --stylesheet custom.css
+
 # Enable verbose logging
 md2cv -i examples/example-cv-en.md --verbose
 ```
@@ -79,6 +82,7 @@ The following options are available to customize the output:
 | `--hide-motivation`        | Hide motivation section in rirekisho format (increases history/license rows)                                     | `false`         |
 | `--photo <filepath>`       | Photo image file for rirekisho format (png, jpg, tiff)                                                           | -               |
 | `--section-order <list>`   | Comma-separated list of section IDs to include in CV output (e.g., `summary,experience,education,skills`)        | All sections    |
+| `--stylesheet <filepath>`  | Custom CSS stylesheet file to override default styles (fonts, colors, spacing, etc.). See [STYLE.md](STYLE.md) for details. | -               |
 | `--log-format <format>`    | Log format: `json`, `text`                                                                                       | `text`          |
 | `--verbose`                | Enable verbose logging                                                                                           | `false`         |
 | `--version`                | Show version                                                                                                     | -               |
@@ -331,4 +335,4 @@ if (result.ok) {
 
 ## License
 
-GPL-3.0
+This project is licensed under the GNU General Public License v3.0 (GPL-3.0). This means you are free to use, modify, and distribute this software, provided that any derivative works are also distributed under the same license. For more details, see the [LICENSE](LICENSE) file.

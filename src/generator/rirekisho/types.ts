@@ -21,6 +21,8 @@ export interface RirekishoOptions {
   readonly hideMotivation?: boolean;
   /** Base64 encoded photo data URI (e.g., "data:image/png;base64,...") */
   readonly photoDataUri?: string | undefined;
+  /** Custom CSS stylesheet content to append after default styles */
+  readonly customStylesheet?: string | undefined;
 }
 
 /** Input data for the Rirekisho generator */

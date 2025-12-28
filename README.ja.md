@@ -59,6 +59,9 @@ md2cv -i examples/example-cv-ja.md --section-order "summary,experience,skills,ed
 # 古い経歴から順に表示
 md2cv -i examples/example-cv-ja.md --order asc
 
+# カスタムスタイルシートを適用
+md2cv -i examples/example-cv-ja.md --stylesheet custom.css
+
 # 詳細ログを有効化
 md2cv -i examples/example-cv-ja.md --verbose
 ```
@@ -77,6 +80,7 @@ md2cv -i examples/example-cv-ja.md --verbose
 | `--hide-motivation`        | 履歴書の志望動機欄を非表示（学歴・職歴・資格欄が拡大）                                         | `false`         |
 | `--photo <filepath>`       | 履歴書用の写真ファイル（png, jpg, tiff）                                                       | -               |
 | `--section-order <list>`   | CV に含めるセクション ID のカンマ区切りリスト（例: `summary,experience,education,skills`）     | 全セクション    |
+| `--stylesheet <filepath>`  | カスタム CSS スタイルシートファイル（フォント、色、余白などを上書き）。詳細は [STYLE.md](STYLE.md) を参照。 | -               |
 | `--log-format <format>`    | ログフォーマット: `json`, `text`                                                               | `text`          |
 | `--verbose`                | 詳細ログを有効化                                                                               | `false`         |
 | `--version`                | バージョンを表示                                                                               | -               |
@@ -334,4 +338,4 @@ if (result.ok) {
 
 ## ライセンス
 
-GPL-3.0
+このプロジェクトは GNU General Public License v3.0 (GPL-3.0) の下でライセンスされています。このソフトウェアは自由に使用、変更、配布できますが、派生物も同じライセンスの下で配布する必要があります。詳細は [LICENSE](LICENSE) ファイルを参照してください。

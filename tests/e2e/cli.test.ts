@@ -37,15 +37,15 @@ function fileExists(filePath: string): boolean {
 
 // Helper to clean output directory
 function cleanOutput(): void {
-  // if (fs.existsSync(OUTPUT_DIR)) {
-  //   const files = fs.readdirSync(OUTPUT_DIR);
-  //   for (const file of files) {
-  //     const filePath = path.join(OUTPUT_DIR, file);
-  //     if (fs.statSync(filePath).isFile()) {
-  //       fs.unlinkSync(filePath);
-  //     }
-  //   }
-  // }
+  if (fs.existsSync(OUTPUT_DIR)) {
+    const files = fs.readdirSync(OUTPUT_DIR);
+    for (const file of files) {
+      const filePath = path.join(OUTPUT_DIR, file);
+      if (fs.statSync(filePath).isFile()) {
+        fs.unlinkSync(filePath);
+      }
+    }
+  }
 }
 
 describe('CLI E2E Tests', () => {
@@ -822,8 +822,9 @@ describe('CLI E2E Tests', () => {
 
       // Should have skills-grid class
       expect(html).toContain('skills-grid');
-      // Should have grid-template-columns with 3 columns
-      expect(html).toContain('grid-template-columns: repeat(3, 1fr)');
+      // Should have grid-template-columns with 3 columns (defined in CSS class)
+      expect(html).toContain('skills-grid--cols-3');
+      expect(html).toContain('grid-template-columns: 1fr 1fr 1fr');
       // Should have skill items with bullets
       expect(html).toContain('skill-item');
       expect(html).toContain('• JavaScript');

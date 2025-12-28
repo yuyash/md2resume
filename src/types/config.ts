@@ -33,6 +33,7 @@ export interface CLIOptions {
   readonly hideMotivation: boolean;
   readonly photo: string | undefined;
   readonly sectionOrder: string | undefined;
+  readonly stylesheet: string | undefined;
 }
 
 /**
@@ -48,6 +49,7 @@ export interface ConfigFile {
   readonly hideMotivation?: boolean;
   readonly photo?: string;
   readonly sectionOrder?: string[];
+  readonly stylesheet?: string;
 }
 
 /**
@@ -65,4 +67,5 @@ export interface ResolvedConfig {
   readonly hideMotivation: boolean;
   readonly photo: string | undefined;
   readonly sectionOrder: string[] | undefined;
+  readonly stylesheet: string | undefined;
 }
