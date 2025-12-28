@@ -74,6 +74,13 @@ function readPhotoAsDataUri(photoPath: string): string {
 }
 
 /**
+ * Read stylesheet file content
+ */
+function readStylesheet(stylesheetPath: string): string {
+  return fs.readFileSync(stylesheetPath, 'utf-8');
+}
+
+/**
  * Escape HTML special characters
  */
 export function escapeHtml(text: string): string {
@@ -230,6 +237,7 @@ function generateCVHTML(
   _chronologicalOrder?: ChronologicalOrder,
   sectionOrder?: string[],
   logger?: Logger,
+  customStylesheet?: string,
 ): string {
   const language = detectLanguage(cv);
   // TODO: Add chronological order support for CV format
@@ -243,9 +251,9 @@ function generateCVHTML(
   const filteredCv = { ...cv, sections };
 
   if (language === 'ja') {
-    return generateCVJaHTML(filteredCv, { paperSize });
+    return generateCVJaHTML(filteredCv, { paperSize, customStylesheet });
   }
-  return generateCVEnHTML(filteredCv, { paperSize });
+  return generateCVEnHTML(filteredCv, { paperSize, customStylesheet });
 }
 
 /**
@@ -339,6 +347,13 @@ export async function generateOutput(
     const chronologicalOrder: ChronologicalOrder =
       format === 'rirekisho' ? 'asc' : (config.chronologicalOrder ?? 'desc');
 
+    // Read custom stylesheet if provided
+    let customStylesheet: string | undefined;
+    if (config.stylesheet) {
+      customStylesheet = readStylesheet(config.stylesheet);
+      logger.debug({ stylesheet: config.stylesheet }, 'Custom stylesheet loaded');
+    }
+
     // Generate HTML
     let html: string;
     if (format === 'rirekisho') {
@@ -358,9 +373,10 @@ export async function generateOutput(
         chronologicalOrder,
         hideMotivation: config.hideMotivation,
         photoDataUri,
+        customStylesheet,
       });
     } else {
-      html = generateCVHTML(cv, config.paperSize, chronologicalOrder, config.sectionOrder, logger);
+      html = generateCVHTML(cv, config.paperSize, chronologicalOrder, config.sectionOrder, logger, customStylesheet);
     }
 
     const baseName = path.basename(config.output);

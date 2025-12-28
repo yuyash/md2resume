@@ -39,6 +39,23 @@ export function generateCSS(layout: LayoutDimensions): string {
   const contentHeight = pageHeight - footerHeight;
 
   return `
+/* CSS Custom Properties for external customization */
+:root {
+  --rirekisho-font-family: "Noto Serif JP", "Hiragino Mincho Pro", "Yu Mincho", "MS Mincho", serif;
+  --rirekisho-font-size-base: ${pt(10 * scale)};
+  --rirekisho-font-size-title: ${pt(22 * scale)};
+  --rirekisho-font-size-name: ${pt(16 * scale)};
+  --rirekisho-font-size-address: ${pt(12 * scale)};
+  --rirekisho-font-size-normal: ${pt(10 * scale)};
+  --rirekisho-font-size-small: ${pt(8 * scale)};
+  --rirekisho-font-size-xs: ${pt(7 * scale)};
+  --rirekisho-font-size-xxs: ${pt(6 * scale)};
+  --rirekisho-color-text: #000;
+  --rirekisho-color-background: #fff;
+  --rirekisho-color-border: #000;
+  --rirekisho-border-width: 0.5pt;
+}
+
 /* Reset & Base */
 @page {
   size: ${mm(paper.width)} ${mm(paper.height)} landscape;
@@ -54,10 +71,10 @@ export function generateCSS(layout: LayoutDimensions): string {
 }
 
 body {
-  font-family: "Noto Serif JP", "Yu Mincho", "MS Mincho", serif;
-  font-size: ${pt(10 * scale)};
-  color: #000;
-  background: #fff;
+  font-family: var(--rirekisho-font-family);
+  font-size: var(--rirekisho-font-size-base);
+  color: var(--rirekisho-color-text);
+  background: var(--rirekisho-color-background);
 }
 
 /* Layout */
@@ -68,7 +85,7 @@ body {
   flex-direction: column;
   padding: ${mm(margin)} ${mm(margin)} ${mm(marginBottom)} ${mm(margin)};
   overflow: hidden;
-  background: #fff;
+  background: var(--rirekisho-color-background);
 }
 
 .spread-content {
@@ -82,7 +99,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  font-size: ${pt(6 * scale)};
+  font-size: var(--rirekisho-font-size-xxs);
 }
 
 .page {
@@ -120,33 +137,33 @@ body {
 
 /* Typography */
 .text--title {
-  font-size: ${pt(22 * scale)};
+  font-size: var(--rirekisho-font-size-title);
   letter-spacing: ${mm(6 * scale)};
   font-weight: bold;
 }
 
 .text--name {
-  font-size: ${pt(16 * scale)};
+  font-size: var(--rirekisho-font-size-name);
 }
 
 .text--address {
-  font-size: ${pt(12 * scale)};
+  font-size: var(--rirekisho-font-size-address);
 }
 
 .text--normal {
-  font-size: ${pt(10 * scale)};
+  font-size: var(--rirekisho-font-size-normal);
 }
 
 .text--small {
-  font-size: ${pt(8 * scale)};
+  font-size: var(--rirekisho-font-size-small);
 }
 
 .text--xs {
-  font-size: ${pt(7 * scale)};
+  font-size: var(--rirekisho-font-size-xs);
 }
 
 .text--xxs {
-  font-size: ${pt(6 * scale)};
+  font-size: var(--rirekisho-font-size-xxs);
 }
 
 .text--bold {
@@ -176,7 +193,7 @@ body {
 
 /* Borders */
 .border {
-  border: 0.5pt solid #000;
+  border: var(--rirekisho-border-width) solid var(--rirekisho-color-border);
 }
 
 /* Spacing */
@@ -232,7 +249,7 @@ table {
 }
 
 td, th {
-  border: 0.5pt solid #000;
+  border: var(--rirekisho-border-width) solid var(--rirekisho-color-border);
   padding: 0;
   vertical-align: middle;
   font-weight: normal;
@@ -250,13 +267,13 @@ td, th {
 .cell {
   display: flex;
   align-items: center;
-  border: 0.5pt solid #000;
+  border: var(--rirekisho-border-width) solid var(--rirekisho-color-border);
   min-height: ${mm(7 * scale)};
 }
 
 .cell__label {
   width: ${mm(14 * scale)};
-  font-size: ${pt(7 * scale)};
+  font-size: var(--rirekisho-font-size-xs);
   text-align: center;
   flex-shrink: 0;
   align-self: stretch;
@@ -274,12 +291,12 @@ td, th {
 .photo-box {
   width: ${mm(30 * scale)};
   height: ${mm(40 * scale)};
-  border: 0.5pt dashed #000;
+  border: var(--rirekisho-border-width) dashed var(--rirekisho-color-border);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: ${pt(6 * scale)};
+  font-size: var(--rirekisho-font-size-xxs);
   line-height: 1.4;
   text-align: center;
   padding-top: ${mm(2 * scale)};
@@ -289,7 +306,7 @@ td, th {
 /* Photo box with image */
 .photo-box--with-image {
   padding: 0;
-  border: 0.5pt solid #000;
+  border: var(--rirekisho-border-width) solid var(--rirekisho-color-border);
 }
 
 .photo-box--with-image img {
@@ -298,15 +315,15 @@ td, th {
 
 /* Section boxes */
 .section-box {
-  border: 0.5pt solid #000;
+  border: var(--rirekisho-border-width) solid var(--rirekisho-color-border);
   display: flex;
   flex-direction: column;
 }
 
 .section-box__header {
   padding: ${mm(1 * scale)};
-  border-bottom: 0.5pt solid #000;
-  font-size: ${pt(10 * scale)};
+  border-bottom: var(--rirekisho-border-width) solid var(--rirekisho-color-border);
+  font-size: var(--rirekisho-font-size-normal);
   flex-shrink: 0;
 }
 

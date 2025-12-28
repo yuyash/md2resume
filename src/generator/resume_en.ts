@@ -19,6 +19,7 @@ import type {
 
 export interface CVEnOptions {
   readonly paperSize: PaperSize;
+  readonly customStylesheet?: string | undefined;
 }
 
 /**
@@ -101,6 +102,22 @@ function generateStyles(paperSize: PaperSize): string {
   const size = PAGE_SIZES[paperSize];
 
   return `
+    :root {
+      --cv-font-family: "Noto Serif", "Times New Roman", Times, Georgia, serif;
+      --cv-font-size-base: 11pt;
+      --cv-font-size-title: 20pt;
+      --cv-font-size-section: 12pt;
+      --cv-font-size-small: 10pt;
+      --cv-font-size-xs: 9pt;
+      --cv-line-height: 1.4;
+      --cv-color-text: #333;
+      --cv-color-heading: #000;
+      --cv-color-muted: #555;
+      --cv-color-border: #333;
+      --cv-color-background: #fff;
+      --cv-spacing-section: 14px;
+      --cv-spacing-entry: 10px;
+    }
     @page {
       size: ${size.width}mm ${size.height}mm;
       margin: 15mm;
@@ -111,11 +128,11 @@ function generateStyles(paperSize: PaperSize): string {
       box-sizing: border-box;
     }
     body {
-      font-family: "Times New Roman", Times, serif;
-      font-size: 11pt;
-      line-height: 1.4;
-      color: #333;
-      background: #fff;
+      font-family: var(--cv-font-family);
+      font-size: var(--cv-font-size-base);
+      line-height: var(--cv-line-height);
+      color: var(--cv-color-text);
+      background: var(--cv-color-background);
       max-width: 800px;
       margin: 0 auto;
       padding: 20px;
@@ -126,24 +143,24 @@ function generateStyles(paperSize: PaperSize): string {
       padding-bottom: 12px;
     }
     h1 {
-      font-size: 20pt;
+      font-size: var(--cv-font-size-title);
       font-weight: bold;
       margin-bottom: 6px;
-      color: #000;
+      color: var(--cv-color-heading);
     }
     .contact-info {
-      font-size: 10pt;
-      color: #333;
+      font-size: var(--cv-font-size-small);
+      color: var(--cv-color-text);
     }
     .contact-info a {
-      color: #333;
+      color: var(--cv-color-text);
       text-decoration: none;
     }
     .contact-info a:hover {
       text-decoration: underline;
     }
     section {
-      margin-bottom: 14px;
+      margin-bottom: var(--cv-spacing-section);
       page-break-inside: avoid;
       break-inside: avoid;
     }
@@ -152,16 +169,16 @@ function generateStyles(paperSize: PaperSize): string {
       break-inside: avoid;
     }
     h2 {
-      font-size: 12pt;
+      font-size: var(--cv-font-size-section);
       font-weight: bold;
       text-transform: uppercase;
-      border-bottom: 1px solid #333;
+      border-bottom: 1px solid var(--cv-color-border);
       padding-bottom: 2px;
       margin-bottom: 8px;
-      color: #000;
+      color: var(--cv-color-heading);
     }
     .entry {
-      margin-bottom: 10px;
+      margin-bottom: var(--cv-spacing-entry);
     }
     .entry-header {
       display: flex;
@@ -171,24 +188,24 @@ function generateStyles(paperSize: PaperSize): string {
     }
     .entry-title {
       font-weight: bold;
-      color: #000;
+      color: var(--cv-color-heading);
     }
     .entry-subtitle {
       font-style: italic;
-      color: #333;
-      font-size: 10pt;
+      color: var(--cv-color-text);
+      font-size: var(--cv-font-size-small);
     }
     .entry-date {
-      color: #333;
-      font-size: 10pt;
+      color: var(--cv-color-text);
+      font-size: var(--cv-font-size-small);
     }
     .entry-location {
-      color: #555;
-      font-size: 10pt;
+      color: var(--cv-color-muted);
+      font-size: var(--cv-font-size-small);
     }
     .entry-summary {
       margin-top: 3px;
-      font-size: 10pt;
+      font-size: var(--cv-font-size-small);
     }
     ul {
       margin-left: 18px;
@@ -196,11 +213,11 @@ function generateStyles(paperSize: PaperSize): string {
     }
     li {
       margin-bottom: 2px;
-      font-size: 10pt;
+      font-size: var(--cv-font-size-small);
     }
     p {
       margin-bottom: 6px;
-      font-size: 10pt;
+      font-size: var(--cv-font-size-small);
     }
     .role {
       margin-bottom: 8px;
@@ -216,37 +233,39 @@ function generateStyles(paperSize: PaperSize): string {
     }
     .project-name {
       font-weight: 500;
-      font-size: 10pt;
+      font-size: var(--cv-font-size-small);
     }
     .competency-entry {
       margin-bottom: 4px;
-      font-size: 10pt;
+      font-size: var(--cv-font-size-small);
     }
     .competency-header {
       font-weight: bold;
     }
     .skills-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
       gap: 2px 20px;
     }
+    .skills-grid--cols-3 {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
     .skill-item {
-      font-size: 10pt;
+      font-size: var(--cv-font-size-small);
     }
     .skill-category {
       margin-bottom: 4px;
-      font-size: 10pt;
+      font-size: var(--cv-font-size-small);
     }
     .skill-category-name {
       font-weight: bold;
     }
     .cert-item {
-      font-size: 9pt;
-      color: #000;
+      font-size: var(--cv-font-size-xs);
+      color: var(--cv-color-heading);
       margin-bottom: 2px;
     }
     .lang-item {
-      font-size: 9pt;
+      font-size: var(--cv-font-size-xs);
     }
     @media print {
       body {
@@ -435,7 +454,9 @@ function renderSkills(entries: readonly SkillEntry[], options: SkillsOptions): s
   }
 
   const columns = options.columns ?? DEFAULT_SKILLS_COLUMNS;
-  let html = `<div class="skills-grid" style="grid-template-columns: repeat(${columns}, 1fr);">`;
+  const colsClass = columns === 3 ? 'skills-grid--cols-3' : '';
+  const colsStyle = columns !== 3 ? `grid-template-columns: repeat(${columns}, 1fr);` : '';
+  let html = `<div class="skills-grid ${colsClass}"${colsStyle ? ` style="${colsStyle}"` : ''}>`;
   for (const item of allItems) {
     html += `<div class="skill-item">• ${escapeHtml(item)}</div>`;
   }
@@ -451,7 +472,9 @@ function renderSkillsList(items: readonly string[], columns: number = DEFAULT_SK
     return '';
   }
 
-  let html = `<div class="skills-grid" style="grid-template-columns: repeat(${columns}, 1fr);">`;
+  const colsClass = columns === 3 ? 'skills-grid--cols-3' : '';
+  const colsStyle = columns !== 3 ? `grid-template-columns: repeat(${columns}, 1fr);` : '';
+  let html = `<div class="skills-grid ${colsClass}"${colsStyle ? ` style="${colsStyle}"` : ''}>`;
   for (const item of items) {
     html += `<div class="skill-item">• ${escapeHtml(item)}</div>`;
   }
@@ -561,12 +584,17 @@ export function generateCVEnHTML(cv: CVInput, options: CVEnOptions): string {
   const sectionsHtml = cv.sections
     .map((section) => {
       return `
-<section>
+<section class="cv-section cv-section--${section.id}">
   <h2>${escapeHtml(section.title)}</h2>
   ${renderSectionContent(section.content, section.id)}
 </section>`;
     })
     .join('\n');
+
+  // Include custom stylesheet if provided
+  const customStylesHtml = options.customStylesheet 
+    ? `<style class="custom-styles">${options.customStylesheet}</style>` 
+    : '';
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -574,14 +602,15 @@ export function generateCVEnHTML(cv: CVInput, options: CVEnOptions): string {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${escapeHtml(name)} - CV</title>
-  <style>${styles}</style>
+  <style class="default-styles">${styles}</style>
+  ${customStylesHtml}
 </head>
-<body>
-  <header>
-    <h1>${escapeHtml(name)}</h1>
+<body class="cv cv--en">
+  <header class="cv-header">
+    <h1 class="cv-name">${escapeHtml(name)}</h1>
     <div class="contact-info">${contactHtml}</div>
   </header>
-  <main>
+  <main class="cv-content">
 ${sectionsHtml}
   </main>
 </body>

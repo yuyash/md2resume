@@ -182,6 +182,11 @@ export function loadEnvFile(inputPath: string, logger: Logger, verbose: boolean)
 const SUPPORTED_PHOTO_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.tiff', '.tif'];
 
 /**
+ * Supported stylesheet extensions
+ */
+const SUPPORTED_STYLESHEET_EXTENSIONS = ['.css'];
+
+/**
  * Validate photo file path
  */
 function validatePhotoPath(photoPath: string): void {
@@ -193,6 +198,22 @@ function validatePhotoPath(photoPath: string): void {
   if (!SUPPORTED_PHOTO_EXTENSIONS.includes(ext)) {
     throw new Error(
       `Unsupported photo format: ${ext}. Supported formats: ${SUPPORTED_PHOTO_EXTENSIONS.join(', ')}`,
+    );
+  }
+}
+
+/**
+ * Validate stylesheet file path
+ */
+function validateStylesheetPath(stylesheetPath: string): void {
+  if (!fs.existsSync(stylesheetPath)) {
+    throw new Error(`Stylesheet file not found: ${stylesheetPath}`);
+  }
+
+  const ext = path.extname(stylesheetPath).toLowerCase();
+  if (!SUPPORTED_STYLESHEET_EXTENSIONS.includes(ext)) {
+    throw new Error(
+      `Unsupported stylesheet format: ${ext}. Supported formats: ${SUPPORTED_STYLESHEET_EXTENSIONS.join(', ')}`,
     );
   }
 }
@@ -220,6 +241,14 @@ export function resolveConfig(cliOptions: CLIOptions): ResolvedConfig {
     validatePhotoPath(photoPath);
   }
 
+  // Resolve stylesheet path (CLI takes precedence over config file)
+  const stylesheetPath = cliOptions.stylesheet ?? configFile.stylesheet;
+
+  // Validate stylesheet path if provided
+  if (stylesheetPath) {
+    validateStylesheetPath(stylesheetPath);
+  }
+
   return {
     input: cliOptions.input,
     output: cliOptions.output ?? configFile.output ?? defaultOutput,
@@ -234,6 +263,7 @@ export function resolveConfig(cliOptions: CLIOptions): ResolvedConfig {
     sectionOrder: cliOptions.sectionOrder 
       ? cliOptions.sectionOrder.split(',').map(s => s.trim())
       : configFile.sectionOrder,
+    stylesheet: stylesheetPath,
   };
 }
 
@@ -315,6 +345,10 @@ export function createCLIProgram(): Command {
       '--section-order <sections>',
       'Comma-separated list of section IDs to include in CV output (e.g., "summary,experience,education,skills"). Sections not listed will be skipped. Only applies to CV format.',
     )
+    .option(
+      '--stylesheet <filepath>',
+      'Custom CSS stylesheet file to apply additional styles. The stylesheet is appended after default styles, allowing you to override fonts, colors, spacing, etc.',
+    )
     .option('--log-format <format>', 'Log format (json or text)', 'text')
     .option('--verbose', 'Enable verbose logging', false)
     .action(async (opts: Record<string, unknown>) => {
@@ -333,6 +367,7 @@ export function createCLIProgram(): Command {
           hideMotivation: opts.hideMotivation === true,
           photo: typeof opts.photo === 'string' ? opts.photo : undefined,
           sectionOrder: typeof opts.sectionOrder === 'string' ? opts.sectionOrder : undefined,
+          stylesheet: typeof opts.stylesheet === 'string' ? opts.stylesheet : undefined,
         };
 
         await runCLI(cliOptions);

@@ -68,12 +68,14 @@ describe('rirekisho/styles', () => {
         expect(css).toContain('Noto Serif JP');
       });
 
-      it('should set scaled font size', () => {
+      it('should set scaled font size via CSS variable', () => {
         const layout = createTestLayout('a4');
         const css = generateCSS(layout);
         const scale = SCALE_FACTORS.a4;
 
-        expect(css).toContain(`font-size: ${10 * scale}pt`);
+        // Font size is now defined as CSS variable
+        expect(css).toContain(`--rirekisho-font-size-base: ${10 * scale}pt`);
+        expect(css).toContain('font-size: var(--rirekisho-font-size-base)');
       });
     });
 
@@ -137,13 +139,16 @@ describe('rirekisho/styles', () => {
         expect(css).toContain('.text--xxs');
       });
 
-      it('should scale typography sizes', () => {
+      it('should scale typography sizes via CSS variables', () => {
         const layout = createTestLayout('a4');
         const css = generateCSS(layout);
         const scale = SCALE_FACTORS.a4;
 
-        expect(css).toContain(`font-size: ${22 * scale}pt`); // title
-        expect(css).toContain(`font-size: ${16 * scale}pt`); // name
+        // Typography sizes are now defined as CSS variables
+        expect(css).toContain(`--rirekisho-font-size-title: ${22 * scale}pt`);
+        expect(css).toContain(`--rirekisho-font-size-name: ${16 * scale}pt`);
+        expect(css).toContain('font-size: var(--rirekisho-font-size-title)');
+        expect(css).toContain('font-size: var(--rirekisho-font-size-name)');
       });
     });
 
@@ -256,11 +261,12 @@ describe('rirekisho/styles', () => {
         expect(css).toContain(`height: ${40 * scale}mm`);
       });
 
-      it('should use dashed border', () => {
+      it('should use dashed border via CSS variable', () => {
         const layout = createTestLayout();
         const css = generateCSS(layout);
 
-        expect(css).toContain('border: 0.5pt dashed');
+        // Border uses CSS variable for width
+        expect(css).toContain('var(--rirekisho-border-width) dashed var(--rirekisho-color-border)');
       });
 
       it('should define photo-box--with-image class', () => {
@@ -270,13 +276,13 @@ describe('rirekisho/styles', () => {
         expect(css).toContain('.photo-box--with-image');
       });
 
-      it('should use solid border for photo-box--with-image', () => {
+      it('should use solid border for photo-box--with-image via CSS variable', () => {
         const layout = createTestLayout();
         const css = generateCSS(layout);
 
-        // Check that photo-box--with-image has solid border
+        // Check that photo-box--with-image has solid border using CSS variable
         expect(css).toContain('.photo-box--with-image');
-        expect(css).toContain('border: 0.5pt solid');
+        expect(css).toContain('var(--rirekisho-border-width) solid var(--rirekisho-color-border)');
       });
     });
 
