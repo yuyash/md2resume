@@ -41,5 +41,23 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build package
+        run: npm run build
+
+      - name: Create npm package tarball
+        run: npm pack
+
+      - name: Get package info
+        id: package
+        run: |
+          TARBALL=$(ls *.tgz)
+          echo "tarball=$TARBALL" >> $GITHUB_OUTPUT
+
+      - name: Upload tarball to GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload ${{ needs.release-please.outputs.tag_name }} ${{ steps.package.outputs.tarball }}
+
       - name: Publish to npm
         run: npm publish --provenance --access public
